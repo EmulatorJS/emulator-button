@@ -16,7 +16,7 @@
         });
 	})();
 	try {
-		var URL = 'https://unruffled-bhaskara-7b045c.netlify.app';
+		var URL = 'https://canvas-database-blob-006.netlify.app';
 		var b = await fetch(URL + '/info.json');
 		var games = await b.text();
 		var games = JSON.parse(games);
