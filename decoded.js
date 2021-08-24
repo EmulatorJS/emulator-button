@@ -3,7 +3,7 @@
         fetch('https://raw.githack.com/ethanaobrien/emulator-button/main/version.json').then(response => {
             if (response.ok) {
                 response.text().then(body => {
-                    var usingVersion = '1.5';
+                    var usingVersion = '1.6';
                     var version = JSON.parse(body);
                     if (usingVersion != version.current_version) {
                         alert('You have version ' + usingVersion + ' but the newest version is ' + version.current_version);
@@ -16,7 +16,7 @@
         });
 	})();
 	try {
-		var URL = 'https://canvas-database-blob-006.netlify.app';
+		var URL = 'https://canvas-cluster-006.netlify.app';
 		var b = await fetch(URL + '/info.json');
 		var games = await b.text();
 		var games = JSON.parse(games);
