@@ -16,8 +16,8 @@
         });
 	})();
 	try {
-		var URL = 'https://unruffled-bhaskara-7b045c.netlify.app/info.json';
-		var b = await fetch(URL);
+		var URL = 'https://unruffled-bhaskara-7b045c.netlify.app';
+		var b = await fetch(URL + '/info.json');
 		var games = await b.text();
 		var games = JSON.parse(games);
 		var server = URL
