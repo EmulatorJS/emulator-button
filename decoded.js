@@ -1,29 +1,35 @@
 (async function() {
-	(function () {
-        fetch('https://raw.githack.com/ethanaobrien/emulator-button/main/version.json').then(response => {
-            if (response.ok) {
-                response.text().then(body => {
-                    var usingVersion = '1.6';
-                    var version = JSON.parse(body);
-                    if (usingVersion != version.current_version) {
-                        alert('You have version ' + usingVersion + ' but the newest version is ' + version.current_version);
-                        if (confirm('Do you want to update? (Github Pages will open)')) {
-                            window.open('https://raw.githack.com/ethanaobrien/emulator-button/main/index.html');
-                        };
+    fetch('https://raw.githack.com/ethanaobrien/emulator-button/main/version.json').then(response => {
+        if (response.ok) {
+            response.text().then(body => {
+                var usingVersion = '1.7';
+                var version = JSON.parse(body);
+                if (usingVersion < version.current_version) {
+                    alert('You have version ' + usingVersion + ' but the newest version is ' + version.current_version);
+                    if (confirm('Do you want to update? (Github Pages will open)')) {
+                        window.open('https://raw.githack.com/ethanaobrien/emulator-button/main/index.html');
                     };
-                });
-            };
-        });
-	})();
+                };
+            });
+        };
+    });
 	try {
-		var URL = 'https://canvas-cluster-006.netlify.app';
+		var URL = 'https://canvas-cluster-005.netlify.app';
+		var server = URL;
 		var b = await fetch(URL + '/info.json');
 		var games = await b.text();
 		var games = JSON.parse(games);
-		var server = URL
-	} catch(e) { /** TODO - Add more servers (But what hosting services?) **/
-		alert('All game servers seem to be down - Contact me! (First, try using a different site, google.com works!)');
-		return;
+	} catch(e) {
+        try {
+            var URL = 'https://canvas-cluster-006.netlify.app';
+            var server = URL;
+            var b = await fetch(URL + '/info.json');
+            var games = await b.text();
+            var games = JSON.parse(games);
+        } catch(e) {
+            alert('All game servers seem to be down - Contact me! (First, try using a different site, google.com works!)');
+            return;
+        };
 	};
 	while(document.body.firstChild) {
 		document.body.removeChild(document.body.firstChild);
@@ -32,7 +38,10 @@
 	var b = document.createElement('p');
 	b.innerHTML = 'Contact me to add another game!';
 	a.appendChild(b);
-	for (var i=0; i<games.length; i++) {
+	var b = document.createElement('p');
+	b.innerHTML = 'Last Updated: ' + games[0].lastUpdated;
+	a.appendChild(b);
+	for (var i=1; i<games.length; i++) {
 		var input = document.createElement('input');
 		input.type = 'radio';
 		input.id = 'game-' + i;
