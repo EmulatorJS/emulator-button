@@ -42,9 +42,9 @@
                 var extension = input.files[0].name.split('.').pop();
                 if (['fds', 'nes', 'unif', 'unf'].includes(extension)) {
                     var core = 'nes';
-                } else if (['z64'].includes(extension) {
+                } else if (['z64'].includes(extension)) {
                     var core = 'n64';
-                } else if (['smc', 'fig', 'sfc', 'gd3', 'gd7', 'dx2', 'bsx', 'swc'].includes(extension) {
+                } else if (['smc', 'fig', 'sfc', 'gd3', 'gd7', 'dx2', 'bsx', 'swc'].includes(extension)) {
                     var core = 'snes';
                 } else {
                     var core = prompt('Input core (examples: nes, snes, n64, gb, gba)');
@@ -109,9 +109,9 @@
         var extension = input.files[0].name.split('.').pop();
         if (['fds', 'nes', 'unif', 'unf'].includes(extension)) {
             var core = 'nes';
-        } else if (['z64'].includes(extension) {
+        } else if (['z64'].includes(extension)) {
             var core = 'n64';
-        } else if (['smc', 'fig', 'sfc', 'gd3', 'gd7', 'dx2', 'bsx', 'swc'].includes(extension) {
+        } else if (['smc', 'fig', 'sfc', 'gd3', 'gd7', 'dx2', 'bsx', 'swc'].includes(extension)) {
             var core = 'snes';
         } else {
             var core = prompt('Input core (examples: nes, snes, n64, gb, gba)');
