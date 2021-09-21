@@ -2,7 +2,7 @@
     fetch('https://raw.githack.com/ethanaobrien/emulator-button/main/version.json').then(response => {
         if (response.ok) {
             response.text().then(body => {
-                var usingVersion = 2;
+                var usingVersion = 2.1;
                 var version = JSON.parse(body);
                 if (usingVersion < version.current_version) {
                     alert('You have version ' + usingVersion + ' but the newest version is ' + version.current_version);
@@ -13,10 +13,16 @@
             });
         };
     });
+    if (String.prototype.replaceAll === undefined) {
+        String.prototype.replaceAll = function(a, b) {
+            return this.split(a).join(b);
+        };
+    };
     var customRom = function(file) {
         while(document.body.firstChild) {
             document.body.removeChild(document.body.firstChild);
         };
+        var gameName = file.name.replaceAll("'", "\\'");
         var extension = file.name.split('.').pop();
         if (['fds', 'nes', 'unif', 'unf'].includes(extension)) {
             var core = 'nes';
@@ -37,7 +43,7 @@
         a.appendChild(b);
         document.body.appendChild(a);
         var script = document.createElement('script');
-        script.innerHTML = "EJS_player = '#game'; EJS_biosUrl = ''; EJS_gameUrl = '" + fileURL + "'; EJS_core = '" + core + "'; EJS_lightgun = false; EJS_pathtodata = 'https://rawcdn.githack.com/ethanaobrien/emulatorjs/main/data/'; ";
+        script.innerHTML = "EJS_player = '#game'; EJS_biosUrl = ''; EJS_gameName = '" + gameName + "'; EJS_gameUrl = '" + fileURL + "'; EJS_core = '" + core + "'; EJS_lightgun = false; EJS_pathtodata = 'https://rawcdn.githack.com/ethanaobrien/emulatorjs/demo/data/'; ";
         document.body.appendChild(script);
         var script = document.createElement('script');
         script.src = 'https://rawcdn.githack.com/ethanaobrien/emulatorjs/main/data/loader.js';
@@ -221,13 +227,13 @@
 	b.innerHTML = 'Contact me to add another game!';
 	a.appendChild(b);
     var p = document.createElement('p');
-    p.innerHTML = 'Game-Button: Version 2.0';
+    p.innerHTML = 'Game-Button: Version 2.1';
     a.appendChild(p);
 	var b = document.createElement('p');
 	b.innerHTML = 'Game Database Last Updated: ' + games[0].lastUpdated;
 	a.appendChild(b);
 	var b = document.createElement('p');
-	b.innerHTML = 'Button Last Updated: September 20, 2021';
+	b.innerHTML = 'Button Last Updated: September 21, 2021';
 	a.appendChild(b);
 	document.body.appendChild(a);
 })();
