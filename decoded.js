@@ -2,10 +2,10 @@
     fetch('https://raw.githack.com/ethanaobrien/emulator-button/main/version.json').then(response => {
         if (response.ok) {
             response.text().then(body => {
-                var usingVersion = 2.1;
+                var usingVersion = 2.2;
                 var version = JSON.parse(body);
                 if (usingVersion < version.current_version) {
-                    alert('You have version ' + usingVersion + ' but the newest version is ' + version.current_version);
+                    alert('You have version ' + usingVersion + ' but the newest version is ' + version.current_version + '. ' + version.changes);
                     if (confirm('Do you want to update? (Github Pages will open)')) {
                         window.open('https://raw.githack.com/ethanaobrien/emulator-button/main/index.html');
                     };
@@ -22,8 +22,9 @@
         while(document.body.firstChild) {
             document.body.removeChild(document.body.firstChild);
         };
-        var gameName = file.name.replaceAll("'", "\\'");
         var extension = file.name.split('.').pop();
+        var gameName = file.name.replaceAll("'", "\\'");
+        var gameName = gameName.substr(0, gameName.length - extension.length - 1);
         if (['fds', 'nes', 'unif', 'unf'].includes(extension)) {
             var core = 'nes';
         } else if (['z64'].includes(extension)) {
@@ -224,10 +225,10 @@
     a.appendChild(document.createElement('br'));
     a.appendChild(document.createElement('br'));
 	var b = document.createElement('p');
-	b.innerHTML = 'Contact me to add another game!';
+	b.innerHTML = '<a href="https://docs.google.com/forms/d/e/1FAIpQLSc1AkX5LLOawyFlBBXIlbyfnRw055tuYnS3ycDxoLiKZCNSYw/viewform?usp=sf_link" target="_blank">Fill out this form to add another game!</a>';
 	a.appendChild(b);
     var p = document.createElement('p');
-    p.innerHTML = 'Game-Button: Version 2.1';
+    p.innerHTML = 'Game-Button: Version 2.2';
     a.appendChild(p);
 	var b = document.createElement('p');
 	b.innerHTML = 'Game Database Last Updated: ' + games[0].lastUpdated;
