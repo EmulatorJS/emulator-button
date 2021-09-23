@@ -1,21 +1,37 @@
 (async function() {
-    fetch('https://raw.githack.com/ethanaobrien/emulator-button/main/version.json').then(response => {
-        if (response.ok) {
-            response.text().then(body => {
-                var usingVersion = 2.2;
-                var version = JSON.parse(body);
-                if (usingVersion < version.current_version) {
-                    alert('You have version ' + usingVersion + ' but the newest version is ' + version.current_version + '. ' + version.changes);
-                    if (confirm('Do you want to update? (Github Pages will open)')) {
-                        window.open('https://raw.githack.com/ethanaobrien/emulator-button/main/index.html');
-                    };
-                };
-            });
+    fetch('https://raw.githack.com/ethanaobrien/emulator-button/main/version.json').then(async function(response) {
+        var body = await response.text();
+        var usingVersion = 2.3;
+        var version = JSON.parse(body);
+        if (usingVersion < version.current_version) {
+            alert('You have version ' + usingVersion + ' but the newest version is ' + version.current_version + '. ' + version.changes);
+            if (confirm('Do you want to update? (Github Pages will open)')) {
+                window.open('https://raw.githack.com/ethanaobrien/emulator-button/main/index.html');
+            };
         };
     });
     if (String.prototype.replaceAll === undefined) {
         String.prototype.replaceAll = function(a, b) {
             return this.split(a).join(b);
+        };
+    };
+    var resetPageContents = function() {
+        while(document.body.firstChild) {
+            document.body.removeChild(document.body.firstChild);
+        };
+        if (! document.body.style) {document.body.style = {};};
+        document.body.style.backgroundColor = 'white';
+        if (document.getElementsByTagName('title')[0]) {
+            var title = document.createElement('title');
+            title.innerHTML = document.getElementsByTagName('title')[0].innerHTML;
+            while(document.head.firstChild) {
+                document.head.removeChild(document.head.firstChild);
+            };
+            document.head.appendChild(title);
+        } else {
+            while(document.head.firstChild) {
+                document.head.removeChild(document.head.firstChild);
+            };
         };
     };
     var customRom = function(file) {
@@ -33,8 +49,12 @@
             var core = 'snes';
         } else if (['nds'].includes(extension)) {
             var core = 'nds';
+        } else if (['gba'].includes(extension)) {
+            var core = 'gba';
+        } else if (['gb'].includes(extension)) {
+            var core = 'gb';
         } else {
-            var core = prompt('Input core (examples: nes, snes, n64, gb, gba)');
+            var core = prompt('Input core (examples: nes, snes, n64, gb, gba, psx)');
         };
         var fileURL = URL.createObjectURL(new Blob([file]));
         var a = document.createElement('div');
@@ -62,11 +82,7 @@
             var games = await b.text();
             var games = JSON.parse(games);
         } catch(e) {
-            while(document.body.firstChild) {
-                document.body.removeChild(document.body.firstChild);
-            };
-            if (! document.body.style) {document.body.style = {};};
-            document.body.style.backgroundColor = 'white';
+            resetPageContents();
             var a = document.createElement('div');
             a.style = 'padding: 50px;';
             var header = document.createElement('h1');
@@ -97,11 +113,7 @@
             return;
         };
 	};
-	while(document.body.firstChild) {
-		document.body.removeChild(document.body.firstChild);
-	};
-    if (! document.body.style) {document.body.style = {};};
-    document.body.style.backgroundColor = 'white';
+	resetPageContents();
     var namez = {
         "nes": "Nintendo Entertainment System",
         "snes": "Super Nintendo Entertainment System",
@@ -228,7 +240,7 @@
 	b.innerHTML = '<a href="https://docs.google.com/forms/d/e/1FAIpQLSc1AkX5LLOawyFlBBXIlbyfnRw055tuYnS3ycDxoLiKZCNSYw/viewform?usp=sf_link" target="_blank">Fill out this form to add another game!</a>';
 	a.appendChild(b);
     var p = document.createElement('p');
-    p.innerHTML = 'Game-Button: Version 2.2';
+    p.innerHTML = 'Game-Button: Version 2.3';
     a.appendChild(p);
 	var b = document.createElement('p');
 	b.innerHTML = 'Game Database Last Updated: ' + games[0].lastUpdated;
