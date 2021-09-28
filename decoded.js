@@ -1,7 +1,7 @@
 (async function() {
     fetch('https://raw.githack.com/ethanaobrien/emulator-button/main/version.json').then(async function(response) {
         var body = await response.text();
-        var usingVersion = 2.4;
+        var usingVersion = 2.5;
         var version = JSON.parse(body);
         if (usingVersion < version.current_version) {
             alert('You have version ' + usingVersion + ' but the newest version is ' + version.current_version + '. ' + version.changes);
@@ -42,12 +42,11 @@
     header.innerHTML = 'Gamez';
     a.appendChild(header);
     var b = document.createElement('p');
-    b.innerHTML = 'Please upload a rom';
+    b.innerHTML = 'Click the choose file button to upload a rom (you can also drag and drop the file)';
     a.appendChild(b);
     a.appendChild(document.createElement('br'));
     var input = document.createElement('input');
-    input.onchange = async function() {
-        var file = input.files[0];
+    async function selectedFile(file) {
         while(document.body.firstChild) {
             document.body.removeChild(document.body.firstChild);
         };
@@ -145,16 +144,44 @@
         script.src = 'https://rawcdn.githack.com/ethanaobrien/emulatorjs/main/data/loader.js';
         document.body.appendChild(script);
     };
+    input.onchange = function() {selectedFile(input.files[0])};
     input.type = 'file';
     a.appendChild(input);
     a.appendChild(document.createElement('br'));
     a.appendChild(document.createElement('br'));
     a.appendChild(document.createElement('br'));
     var p = document.createElement('p');
-    p.innerHTML = 'Game-Button: Version 2.4';
+    p.innerHTML = 'Game-Button: Version 2.5';
     a.appendChild(p);
     var b = document.createElement('p');
     b.innerHTML = 'Button Last Updated: September 28, 2021';
     a.appendChild(b);
     document.body.appendChild(a);
+    function drag(evt) {
+        evt.dataTransfer.dropEffect = 'copy';
+        evt.preventDefault();
+        return false;
+    };
+    function drop(e) {
+        e.dataTransfer.dropEffect = 'copy';
+        e.preventDefault();
+        var items = e.dataTransfer.items;
+        for (var i=0; i<items.length; i++) {
+            var item = items[i];
+            if (item.kind == 'file') {
+                var entry = item.webkitGetAsEntry();
+                entry.file(selectedFile);
+                document.removeEventListener("dragover", drag, false);
+                document.removeEventListener("dragleave", drag, false);
+                document.removeEventListener("dragenter", drag, false);
+                document.removeEventListener("drop", drop, false);
+                return;
+            };
+        };
+        return false;
+    };
+    document.addEventListener("dragover", drag, false);
+    document.addEventListener("dragleave", drag, false);
+    document.addEventListener("dragenter", drag, false);
+    document.addEventListener("drop", drop, false);
 })();
