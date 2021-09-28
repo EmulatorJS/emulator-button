@@ -1,7 +1,7 @@
 (async function() {
     fetch('https://raw.githack.com/ethanaobrien/emulator-button/main/version.json').then(async function(response) {
         var body = await response.text();
-        var usingVersion = 2.3;
+        var usingVersion = 2.4;
         var version = JSON.parse(body);
         if (usingVersion < version.current_version) {
             alert('You have version ' + usingVersion + ' but the newest version is ' + version.current_version + '. ' + version.changes);
@@ -34,7 +34,17 @@
             };
         };
     };
-    var customRom = function(file) {
+	resetPageContents();
+    var a = document.createElement('div');
+    a.style = 'padding: 50px;';
+    var header = document.createElement('h1');
+    header.style = 'font-size: 45px;';
+    header.innerHTML = 'Gamez';
+    a.appendChild(header);
+    a.appendChild(document.createElement('br'));
+    var input = document.createElement('input');
+    input.onchange = async function() {
+        var file = input.files[0];
         while(document.body.firstChild) {
             document.body.removeChild(document.body.firstChild);
         };
@@ -54,7 +64,69 @@
         } else if (['gb'].includes(extension)) {
             var core = 'gb';
         } else {
-            var core = prompt('Input core (examples: nes, snes, n64, gb, gba, psx)');
+            var core = await function() {
+                return new Promise(function(resolve, reject) {
+                    var cores = {"NES / Nintendo Entertainment System / Famicon": "nes",
+                                 "SNES / Super Nintendo Entertainment System": "snes",
+                                 "Nintendo 64": "n64",
+                                 "Nintendo Game Boy": "gb",
+                                 "Nintendo Game Boy Advance": "gba",
+                                 "Nintendo DS": "nds",
+                                 "PlayStation": "psx",
+                                 "Virtual Boy": "vb",
+                                 "Sega Mega Drive": "segaMD",
+                                 "Sega CD": "segaCD",
+                                 "Atari Lynx": "lynx",
+                                 "Sega 32X": "sega32x",
+                                 "Atari Jaguar": "jaguar",
+                                 "Sega Game Gear": "segaGG",
+                                 "Sega Saturn": "segaSaturn",
+                                 "Atari 7800": "atari7800",
+                                 "Atari 2600": "atari2600"};
+                    var a = document.createElement('div');
+                    a.style = 'padding: 50px;';
+                    var p = document.createElement('h2');
+                    p.innerHTML = 'Unable to auto-detect system. Please select the desired system.';
+                    a.appendChild(p);
+                    a.appendChild(document.createElement('br'));
+                    for (var k in cores) {
+                        var input = document.createElement('input');
+                        input.type = 'radio';
+                        input.id = 'game-' + cores[k];
+                        input.name = 'game';
+                        input.value = cores[k];
+                        a.appendChild(input);
+                        var label = document.createElement('label');
+                        label.for = 'game-' + cores[k];
+                        label.innerHTML = k;
+                        a.appendChild(label);
+                        a.appendChild(document.createElement('br'));
+                    };
+                    a.appendChild(document.createElement('br'));
+                    var submit = document.createElement('input');
+                    submit.type = 'submit';
+                    submit.value = 'Load Game';
+                    submit.onclick = function(e) {
+                        var q = false;
+                        var radios = document.getElementsByName('game');
+                        for (var i=0; i<radios.length; i++) {
+                            if (radios[i].checked) {
+                                var q = radios[i].value;
+                                break;
+                            };
+                        };
+                        if (! q) {
+                            return;
+                        };
+                        while(document.body.firstChild) {
+                            document.body.removeChild(document.body.firstChild);
+                        };
+                        resolve(q);
+                    };
+                    a.appendChild(submit);
+                    document.body.appendChild(a);
+                });
+            }();
         };
         var fileURL = URL.createObjectURL(new Blob([file]));
         var a = document.createElement('div');
@@ -64,189 +136,22 @@
         a.appendChild(b);
         document.body.appendChild(a);
         var script = document.createElement('script');
-        script.innerHTML = "EJS_player = '#game'; EJS_biosUrl = ''; EJS_gameName = '" + gameName + "'; EJS_gameUrl = '" + fileURL + "'; EJS_core = '" + core + "'; EJS_lightgun = false; EJS_pathtodata = 'https://rawcdn.githack.com/ethanaobrien/emulatorjs/demo/data/'; ";
+        script.innerHTML = "EJS_player = '#game'; EJS_biosUrl = ''; EJS_gameName = '" + gameName + "'; EJS_gameUrl = '" + fileURL + "'; EJS_core = '" + core + "'; EJS_lightgun = false; EJS_pathtodata = 'https://rawcdn.githack.com/ethanaobrien/emulatorjs/main/data/'; ";
         document.body.appendChild(script);
         var script = document.createElement('script');
         script.src = 'https://rawcdn.githack.com/ethanaobrien/emulatorjs/main/data/loader.js';
         document.body.appendChild(script);
     };
-	try {
-		var server = 'https://canvas-cluster-005.netlify.app';
-		var b = await fetch(server + '/info.json');
-		var games = await b.text();
-		var games = JSON.parse(games);
-	} catch(e) {
-        try {
-            var server = 'https://canvas-cluster-006.netlify.app';
-            var b = await fetch(server + '/info.json');
-            var games = await b.text();
-            var games = JSON.parse(games);
-        } catch(e) {
-            resetPageContents();
-            var a = document.createElement('div');
-            a.style = 'padding: 50px;';
-            var header = document.createElement('h1');
-            header.style = 'font-size: 45px;';
-            header.innerHTML = 'Gamez';
-            a.appendChild(header);
-            a.appendChild(document.createElement('br'));
-            var p = document.createElement('p');
-            p.innerHTML = 'All game servers are down, but you san still upload a rom!';
-            a.appendChild(p);
-            a.appendChild(document.createElement('br'));
-            var input = document.createElement('input');
-            input.onchange = function() {
-                customRom(input.files[0]);
-            };
-            input.type = 'file';
-            a.appendChild(input);
-            a.appendChild(document.createElement('br'));
-            a.appendChild(document.createElement('br'));
-            a.appendChild(document.createElement('br'));
-            var p = document.createElement('p');
-            p.innerHTML = 'Game-Button: Version 2.0';
-            a.appendChild(p);
-            var b = document.createElement('p');
-            b.innerHTML = 'Button Last Updated: September 20, 2021';
-            a.appendChild(b);
-            document.body.appendChild(a);
-            return;
-        };
-	};
-	resetPageContents();
-    var namez = {
-        "nes": "Nintendo Entertainment System",
-        "snes": "Super Nintendo Entertainment System",
-        "gba": "Game Boy Advance",
-        "n64": "Nintendo 64",
-        "nds": "Nintendo DS"
-    };
-    var gamezSortFunc = function(a, b) {
-        if (a.lastUpdated) {
-            return -1;
-        } else if (b.lastUpdated) {
-            return 1;
-        };
-        var asys = a.core;
-        var bsys = b.core;
-        if (asys == bsys) {
-            return a.name.localeCompare(b.name);
-        } else if (asys == 'nes') {
-            return -1;
-        } else if (bsys == 'nes') {
-            return 1;
-        } else if (asys == 'snes') {
-            return -1;
-        } else if (bsys == 'snes') {
-            return 1;
-        } else if (asys == 'gba') {
-            return -1;
-        } else if (bsys == 'gba') {
-            return 1;
-        } else if (asys == 'n64') {
-            return -1;
-        } else if (bsys == 'n64') {
-            return 1;
-        } else if (asys == 'nds') {
-            return -1;
-        } else if (bsys == 'nds') {
-            return 1;
-        };
-        return 0;
-    };
-    games.sort(gamezSortFunc);
-	var a = document.createElement('div');
-    a.style = 'padding: 50px;';
-    var header = document.createElement('h1');
-    header.style = 'font-size: 45px;';
-    header.innerHTML = 'Gamez';
-    a.appendChild(header);
-    var core = '';
-	for (var i=1; i<games.length; i++) {
-        if (games[i].core != core) {
-            var core = games[i].core;
-            a.appendChild(document.createElement('br'));
-            a.appendChild(document.createElement('br'));
-            var p = document.createElement('h2');
-            p.innerHTML = namez[core];
-            a.appendChild(p);
-        };
-		var input = document.createElement('input');
-		input.type = 'radio';
-		input.id = 'game-' + i;
-		input.name = 'game';
-		input.value = i;
-		a.appendChild(input);
-		var label = document.createElement('label');
-		label.for = 'game-' + i;
-		label.innerHTML = games[i].name;
-		a.appendChild(label);
-		a.appendChild(document.createElement('br'));
-	};
-	a.appendChild(document.createElement('br'));
-    a.appendChild(document.createElement('br'));
-    var p = document.createElement('p');
-    p.innerHTML = 'Or select your own rom';
-    a.appendChild(p);
-    var input = document.createElement('input');
-    input.onchange = function() {
-        customRom(input.files[0]);
-    };
     input.type = 'file';
     a.appendChild(input);
-	a.appendChild(document.createElement('br'));
-	a.appendChild(document.createElement('br'));
-    a.appendChild(document.createElement('br'));
-    a.appendChild(document.createElement('br'));
-    var style = document.createElement('style');
-	var submit = document.createElement('input');
-    submit.type = 'submit';
-	submit.value = 'Load Game';
-	submit.onclick = function(e) {
-        var q = false;
-		var radios = document.getElementsByName('game');
-		for (var i=0; i<radios.length; i++) {
-		    if (radios[i].checked) {
-			    var q = games[radios[i].value];
-			    break;
-		    };
-		};
-        if (! q) {
-            return;
-        };
-		while(document.body.firstChild) {
-			document.body.removeChild(document.body.firstChild);
-		};
-		var fileURL = server + '/' + q.filename;
-		var core = q.core;
-		var a = document.createElement('div');
-		a.style = "width:640px;height:480px;max-width:100%";
-		var b = document.createElement('div');
-		b.id = 'game';
-		a.appendChild(b);
-		document.body.appendChild(a);
-		var script = document.createElement('script');
-		script.innerHTML = "EJS_player = '#game'; EJS_biosUrl = ''; EJS_gameUrl = '" + fileURL + "'; EJS_core = '" + core + "'; EJS_lightgun = false; EJS_pathtodata = 'https://rawcdn.githack.com/ethanaobrien/emulatorjs/main/data/'; ";
-		document.body.appendChild(script);
-		var script = document.createElement('script');
-		script.src = 'https://rawcdn.githack.com/ethanaobrien/emulatorjs/main/data/loader.js';
-		document.body.appendChild(script);
-	};
-	a.appendChild(submit);
     a.appendChild(document.createElement('br'));
     a.appendChild(document.createElement('br'));
     a.appendChild(document.createElement('br'));
-	var b = document.createElement('p');
-	b.innerHTML = '<a href="https://docs.google.com/forms/d/e/1FAIpQLSc1AkX5LLOawyFlBBXIlbyfnRw055tuYnS3ycDxoLiKZCNSYw/viewform?usp=sf_link" target="_blank">Fill out this form to add another game!</a>';
-	a.appendChild(b);
     var p = document.createElement('p');
-    p.innerHTML = 'Game-Button: Version 2.3';
+    p.innerHTML = 'Game-Button: Version 2.4';
     a.appendChild(p);
-	var b = document.createElement('p');
-	b.innerHTML = 'Game Database Last Updated: ' + games[0].lastUpdated;
-	a.appendChild(b);
-	var b = document.createElement('p');
-	b.innerHTML = 'Button Last Updated: September 21, 2021';
-	a.appendChild(b);
-	document.body.appendChild(a);
+    var b = document.createElement('p');
+    b.innerHTML = 'Button Last Updated: September 28, 2021';
+    a.appendChild(b);
+    document.body.appendChild(a);
 })();
