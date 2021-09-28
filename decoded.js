@@ -41,6 +41,9 @@
     header.style = 'font-size: 45px;';
     header.innerHTML = 'Gamez';
     a.appendChild(header);
+    var b = document.createElement('p');
+    b.innerHTML = 'Please upload a rom';
+    a.appendChild(b);
     a.appendChild(document.createElement('br'));
     var input = document.createElement('input');
     input.onchange = async function() {
