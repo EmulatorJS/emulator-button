@@ -1,1 +1,1 @@
-{"current_version": 2.5, "changes": "Adds support for dragging and dropping files."}
+{"current_version": 3, "changes": "Changes: Adds support for caching files so you don't have to upload every time."}
