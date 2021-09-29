@@ -1,1 +1,1 @@
-{"current_version": 3.1, "changes": "Changes: Adds support for caching files so you don't have to upload every time and a bug fix."}
+{"current_version": 3.2, "changes": "Changes: Adds support to delete cached file without deleting them all."}
