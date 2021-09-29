@@ -1,7 +1,7 @@
 (async function() {
     fetch('https://raw.githack.com/ethanaobrien/emulator-button/main/version.json').then(async function(response) {
         var body = await response.text();
-        var usingVersion = 3.1;
+        var usingVersion = 3.2;
         var version = JSON.parse(body);
         if (usingVersion < version.current_version) {
             alert('You have version ' + usingVersion + ' but the newest version is ' + version.current_version + '. ' + version.changes);
@@ -68,7 +68,41 @@
                 };
             };
         });
-    }
+    };
+    function deleteRom(key) {
+        return new Promise(function(resolve, reject) {
+            var openRequest = indexedDB.open("emulatorGameCache", 1);
+            openRequest.onerror = function() {};
+            openRequest.onsuccess = function() {
+                var db = openRequest.result;
+                var transaction = db.transaction(["emulatorGameCache"], "readwrite");
+                var objectStore = transaction.objectStore("emulatorGameCache");
+                var currentKeys = objectStore.get('keys');
+                currentKeys.onsuccess = function() {
+                    var keys = currentKeys.result;
+                    if (! keys) {var keys = [];};
+                    var newKeys = [];
+                    for (var i=0; i<keys.length; i++) {
+                        if (keys[i].key != key) {
+                            newKeys.push(keys[i]);
+                        };
+                    };
+                    var request = objectStore.put(newKeys, 'keys');
+                    request.onsuccess = function() {};
+                    request.onerror = function() {};
+                    var request2 = objectStore.delete(key);
+                    request2.onsuccess = function() {resolve()};
+                    request2.onerror = function() {};
+                };
+            };
+            openRequest.onupgradeneeded = function() {
+                var db = openRequest.result;
+                if (! db.objectStoreNames.contains('emulatorGameCache')) {
+                    db.createObjectStore('emulatorGameCache');
+                };
+            };
+        });
+    };
     function createRomCache(data, fileName, core) {
         var openRequest = indexedDB.open("emulatorGameCache", 1);
         openRequest.onerror = function() {};
@@ -254,6 +288,7 @@
     games.sort(gamezSortFunc);
     var c = document.createElement('div');
     for (var i=0; i<games.length; i++) {
+        var br = document.createElement('br');
         var input = document.createElement('input');
         input.type = 'radio';
         input.id = 'game-' + i;
@@ -262,9 +297,29 @@
         c.appendChild(input);
         var label = document.createElement('label');
         label.for = 'game-' + i;
-        label.innerHTML = games[i].name;
+        label.innerHTML = games[i].name + ' - ';
         c.appendChild(label);
-        c.appendChild(document.createElement('br'));
+        var y = document.createElement('a');
+        y.href = 'javascript:void(0)';
+        y.innerHTML = 'delete';
+        y.onclick = function(info, div1, div2, div3, div4) {
+            return async function() {
+                if (!confirm('Are you sure you want to delete ' + info.name + ' from rom cache?')) {return};
+                div1.remove();
+                div2.remove();
+                div3.remove();
+                div4.remove();
+                await deleteRom(info.key);
+                alert('deleted!');
+                if (! c.firstChild) {
+                    var p = document.createElement('p');
+                    p.innerHTML = 'There are no cached Roms';
+                    c.appendChild(p);
+                };
+            };
+        }(games[i], input, label, br, y);
+        c.appendChild(y);
+        c.appendChild(br);
     };
     if (games.length == 0) {
         var p = document.createElement('p');
@@ -353,7 +408,7 @@
     a.appendChild(document.createElement('br'));
     a.appendChild(document.createElement('br'));
     var p = document.createElement('p');
-    p.innerHTML = 'Game-Button: Version 3.1';
+    p.innerHTML = 'Game-Button: Version 3.2';
     a.appendChild(p);
     var b = document.createElement('p');
     b.innerHTML = 'Button Last Updated: September 29, 2021';
