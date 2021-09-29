@@ -1,7 +1,7 @@
 (async function() {
     fetch('https://raw.githack.com/ethanaobrien/emulator-button/main/version.json').then(async function(response) {
         var body = await response.text();
-        var usingVersion = 3;
+        var usingVersion = 3.1;
         var version = JSON.parse(body);
         if (usingVersion < version.current_version) {
             alert('You have version ' + usingVersion + ' but the newest version is ' + version.current_version + '. ' + version.changes);
@@ -295,7 +295,7 @@
         };
         var blob = await getRomData(game.key);
         var fileURL = URL.createObjectURL(blob);
-        var gameName = game.fileName.replaceAll("'", "\\'");
+        var gameName = game.name.replaceAll("'", "\\'");
         var core = game.core;
         var a = document.createElement('div');
         a.style = "width:640px;height:480px;max-width:100%";
@@ -353,7 +353,7 @@
     a.appendChild(document.createElement('br'));
     a.appendChild(document.createElement('br'));
     var p = document.createElement('p');
-    p.innerHTML = 'Game-Button: Version 3';
+    p.innerHTML = 'Game-Button: Version 3.1';
     a.appendChild(p);
     var b = document.createElement('p');
     b.innerHTML = 'Button Last Updated: September 29, 2021';
