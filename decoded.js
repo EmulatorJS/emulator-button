@@ -64,7 +64,6 @@
                         request.onerror = function() {};
                         return resolve([]);
                     };
-                    db.close();
                     resolve(keys);
                 };
                 request.onerror = function() {};
@@ -74,7 +73,6 @@
                 if (! db.objectStoreNames.contains('emulatorGameCache')) {
                     db.createObjectStore('emulatorGameCache');
                 };
-                db.close();
             };
         });
     };
@@ -92,14 +90,12 @@
                     resolve(new Blob([gameData]));
                 };
                 request.onerror = function() {};
-                db.close();
             };
             openRequest.onupgradeneeded = function() {
                 var db = openRequest.result;
                 if (! db.objectStoreNames.contains('emulatorGameCache')) {
                     db.createObjectStore('emulatorGameCache');
                 };
-                db.close();
             };
         });
     };
@@ -127,7 +123,6 @@
                     var request2 = objectStore.delete(key);
                     request2.onsuccess = function() {resolve()};
                     request2.onerror = function() {};
-                    db.close();
                 };
             };
             openRequest.onupgradeneeded = function() {
@@ -135,7 +130,6 @@
                 if (! db.objectStoreNames.contains('emulatorGameCache')) {
                     db.createObjectStore('emulatorGameCache');
                 };
-                db.close();
             };
         });
     };
@@ -166,7 +160,6 @@
                 var request2 = objectStore.put(data, key);
                 request2.onsuccess = function() {};
                 request2.onerror = function() {};
-                db.close();
             };
         };
         openRequest.onupgradeneeded = function() {
@@ -174,7 +167,6 @@
             if (! db.objectStoreNames.contains('emulatorGameCache')) {
                 db.createObjectStore('emulatorGameCache');
             };
-            db.close();
         };
     };
     var resetPageContents = function() {
