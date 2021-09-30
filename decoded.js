@@ -1,7 +1,7 @@
 (async function() {
     fetch('https://raw.githack.com/ethanaobrien/emulator-button/main/version.json').then(async function(response) {
         var body = await response.text();
-        var usingVersion = 3.2;
+        var usingVersion = 3.3;
         var version = JSON.parse(body);
         if (usingVersion < version.current_version) {
             alert('You have version ' + usingVersion + ' but the newest version is ' + version.current_version + '. ' + version.changes);
@@ -15,6 +15,36 @@
             return this.split(a).join(b);
         };
     };
+    function drag(evt) {
+        evt.dataTransfer.dropEffect = 'copy';
+        evt.preventDefault();
+        return false;
+    };
+    function removeDropListen() {
+        document.removeEventListener("dragover", drag, false);
+        document.removeEventListener("dragleave", drag, false);
+        document.removeEventListener("dragenter", drag, false);
+        document.removeEventListener("drop", drop, false);
+    };
+    function drop(e) {
+        e.dataTransfer.dropEffect = 'copy';
+        e.preventDefault();
+        var items = e.dataTransfer.items;
+        for (var i=0; i<items.length; i++) {
+            var item = items[i];
+            if (item.kind == 'file') {
+                var entry = item.webkitGetAsEntry();
+                entry.file(selectedFile);
+                removeDropListen();
+                return;
+            };
+        };
+        return false;
+    };
+    document.addEventListener("dragover", drag, false);
+    document.addEventListener("dragleave", drag, false);
+    document.addEventListener("dragenter", drag, false);
+    document.addEventListener("drop", drop, false);
     function getCachedKeys() {
         return new Promise(function(resolve, reject) {
             var openRequest = indexedDB.open("emulatorGameCache", 1);
@@ -34,6 +64,7 @@
                         request.onerror = function() {};
                         return resolve([]);
                     };
+                    db.close();
                     resolve(keys);
                 };
                 request.onerror = function() {};
@@ -43,6 +74,7 @@
                 if (! db.objectStoreNames.contains('emulatorGameCache')) {
                     db.createObjectStore('emulatorGameCache');
                 };
+                db.close();
             };
         });
     };
@@ -60,12 +92,14 @@
                     resolve(new Blob([gameData]));
                 };
                 request.onerror = function() {};
+                db.close();
             };
             openRequest.onupgradeneeded = function() {
                 var db = openRequest.result;
                 if (! db.objectStoreNames.contains('emulatorGameCache')) {
                     db.createObjectStore('emulatorGameCache');
                 };
+                db.close();
             };
         });
     };
@@ -93,6 +127,7 @@
                     var request2 = objectStore.delete(key);
                     request2.onsuccess = function() {resolve()};
                     request2.onerror = function() {};
+                    db.close();
                 };
             };
             openRequest.onupgradeneeded = function() {
@@ -100,6 +135,7 @@
                 if (! db.objectStoreNames.contains('emulatorGameCache')) {
                     db.createObjectStore('emulatorGameCache');
                 };
+                db.close();
             };
         });
     };
@@ -117,8 +153,12 @@
                 var key = fileName.split(' ').join('').toLowerCase();
                 var key = key.substr(0, key.length - key.split('.').pop().length - 1);
                 var name = fileName.substr(0, fileName.length - fileName.split('.').pop().length - 1);
-                if (keys.includes(key) || key == 'keys') {return};
                 var newKey = {key: key, name: name, core: core, fileName: fileName};
+                for (var i=0; i<keys.length; i++) {
+                    if (keys[i].key == newKey.key) {
+                        return;
+                    };
+                };
                 keys.push(newKey);
                 var request = objectStore.put(keys, 'keys');
                 request.onsuccess = function() {};
@@ -126,6 +166,7 @@
                 var request2 = objectStore.put(data, key);
                 request2.onsuccess = function() {};
                 request2.onerror = function() {};
+                db.close();
             };
         };
         openRequest.onupgradeneeded = function() {
@@ -133,6 +174,7 @@
             if (! db.objectStoreNames.contains('emulatorGameCache')) {
                 db.createObjectStore('emulatorGameCache');
             };
+            db.close();
         };
     };
     var resetPageContents = function() {
@@ -344,6 +386,7 @@
             };
         };
         if (! q) {return};
+        removeDropListen();
         var game = q;
         while(document.body.firstChild) {
             document.body.removeChild(document.body.firstChild);
@@ -408,37 +451,10 @@
     a.appendChild(document.createElement('br'));
     a.appendChild(document.createElement('br'));
     var p = document.createElement('p');
-    p.innerHTML = 'Game-Button: Version 3.2';
+    p.innerHTML = 'Game-Button: Version 3.3';
     a.appendChild(p);
     var b = document.createElement('p');
     b.innerHTML = 'Button Last Updated: September 29, 2021';
     a.appendChild(b);
     document.body.appendChild(a);
-    function drag(evt) {
-        evt.dataTransfer.dropEffect = 'copy';
-        evt.preventDefault();
-        return false;
-    };
-    function drop(e) {
-        e.dataTransfer.dropEffect = 'copy';
-        e.preventDefault();
-        var items = e.dataTransfer.items;
-        for (var i=0; i<items.length; i++) {
-            var item = items[i];
-            if (item.kind == 'file') {
-                var entry = item.webkitGetAsEntry();
-                entry.file(selectedFile);
-                document.removeEventListener("dragover", drag, false);
-                document.removeEventListener("dragleave", drag, false);
-                document.removeEventListener("dragenter", drag, false);
-                document.removeEventListener("drop", drop, false);
-                return;
-            };
-        };
-        return false;
-    };
-    document.addEventListener("dragover", drag, false);
-    document.addEventListener("dragleave", drag, false);
-    document.addEventListener("dragenter", drag, false);
-    document.addEventListener("drop", drop, false);
 })();
