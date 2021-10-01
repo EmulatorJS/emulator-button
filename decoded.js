@@ -1,7 +1,7 @@
 (async function() {
     fetch('https://raw.githack.com/ethanaobrien/emulator-button/main/version.json').then(async function(response) {
         var body = await response.text();
-        var usingVersion = 3.3;
+        var usingVersion = 3.4;
         var version = JSON.parse(body);
         if (usingVersion < version.current_version) {
             alert('You have version ' + usingVersion + ' but the newest version is ' + version.current_version + '. ' + version.changes);
@@ -199,7 +199,7 @@
     b.innerHTML = 'Click the choose file button to upload a rom (you can also drag and drop the file)';
     a.appendChild(b);
     a.appendChild(document.createElement('br'));
-    var input = document.createElement('input');
+    var file = document.createElement('input');
     async function selectedFile(file) {
         while(document.body.firstChild) {
             document.body.removeChild(document.body.firstChild);
@@ -308,9 +308,9 @@
     var gamezSortFunc = function(a, b) {
         return a.name.localeCompare(b.name);
     };
-    input.onchange = function() {selectedFile(input.files[0])};
-    input.type = 'file';
-    a.appendChild(input);
+    file.onchange = function() {selectedFile(file.files[0])};
+    file.type = 'file';
+    a.appendChild(file);
     a.appendChild(document.createElement('br'));
     a.appendChild(document.createElement('br'));
     var cachedRomsDiv = document.createElement('div');
@@ -443,10 +443,10 @@
     a.appendChild(document.createElement('br'));
     a.appendChild(document.createElement('br'));
     var p = document.createElement('p');
-    p.innerHTML = 'Game-Button: Version 3.3';
+    p.innerHTML = 'Game-Button: Version 3.4';
     a.appendChild(p);
     var b = document.createElement('p');
-    b.innerHTML = 'Button Last Updated: September 29, 2021';
+    b.innerHTML = 'Button Last Updated: October 1, 2021';
     a.appendChild(b);
     document.body.appendChild(a);
 })();
