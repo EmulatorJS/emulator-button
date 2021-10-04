@@ -1,7 +1,7 @@
 (async function() {
     fetch('https://raw.githack.com/ethanaobrien/emulator-button/main/version.json').then(async function(response) {
         var body = await response.text();
-        var usingVersion = 3.4;
+        var usingVersion = 3.5;
         var version = JSON.parse(body);
         if (usingVersion < version.current_version) {
             alert('You have version ' + usingVersion + ' but the newest version is ' + version.current_version + '. ' + version.changes);
@@ -222,65 +222,90 @@
         } else {
             var core = await function() {
                 return new Promise(function(resolve, reject) {
-                    var cores = {"NES / Nintendo Entertainment System / Famicon": "nes",
-                                 "SNES / Super Nintendo Entertainment System": "snes",
-                                 "Nintendo 64": "n64",
-                                 "Nintendo Game Boy": "gb",
-                                 "Nintendo Game Boy Advance": "gba",
-                                 "Nintendo DS": "nds",
-                                 "PlayStation": "psx",
-                                 "Virtual Boy": "vb",
-                                 "Sega Mega Drive": "segaMD",
-                                 "Sega CD": "segaCD",
-                                 "Atari Lynx": "lynx",
-                                 "Sega 32X": "sega32x",
-                                 "Atari Jaguar": "jaguar",
-                                 "Sega Game Gear": "segaGG",
-                                 "Sega Saturn": "segaSaturn",
-                                 "Atari 7800": "atari7800",
-                                 "Atari 2600": "atari2600"};
-                    var a = document.createElement('div');
-                    a.style = 'padding: 50px;';
-                    var p = document.createElement('h2');
-                    p.innerHTML = 'Unable to auto-detect system. Please select the desired system.';
-                    a.appendChild(p);
-                    a.appendChild(document.createElement('br'));
-                    for (var k in cores) {
-                        var input = document.createElement('input');
-                        input.type = 'radio';
-                        input.id = 'game-' + cores[k];
-                        input.name = 'game';
-                        input.value = cores[k];
-                        a.appendChild(input);
-                        var label = document.createElement('label');
-                        label.for = 'game-' + cores[k];
-                        label.innerHTML = k;
-                        a.appendChild(label);
+                    function askForCore() {
+                        var cores = {"NES / Nintendo Entertainment System / Famicon": "nes",
+                                     "SNES / Super Nintendo Entertainment System": "snes",
+                                     "Nintendo 64": "n64",
+                                     "Nintendo Game Boy": "gb",
+                                     "Nintendo Game Boy Advance": "gba",
+                                     "Nintendo DS": "nds",
+                                     "PlayStation": "psx",
+                                     "Virtual Boy": "vb",
+                                     "Sega Mega Drive": "segaMD",
+                                     "Sega CD": "segaCD",
+                                     "Atari Lynx": "lynx",
+                                     "Sega 32X": "sega32x",
+                                     "Atari Jaguar": "jaguar",
+                                     "Sega Game Gear": "segaGG",
+                                     "Sega Saturn": "segaSaturn",
+                                     "Atari 7800": "atari7800",
+                                     "Atari 2600": "atari2600"};
+                        var a = document.createElement('div');
+                        a.style = 'padding: 50px;';
+                        var p = document.createElement('h2');
+                        p.innerHTML = 'Unable to auto-detect system. Please select the desired system.';
+                        a.appendChild(p);
                         a.appendChild(document.createElement('br'));
+                        for (var k in cores) {
+                            var input = document.createElement('input');
+                            input.type = 'radio';
+                            input.id = 'game-' + cores[k];
+                            input.name = 'game';
+                            input.value = cores[k];
+                            a.appendChild(input);
+                            var label = document.createElement('label');
+                            label.for = 'game-' + cores[k];
+                            label.innerHTML = k;
+                            a.appendChild(label);
+                            a.appendChild(document.createElement('br'));
+                        };
+                        a.appendChild(document.createElement('br'));
+                        var submit = document.createElement('input');
+                        submit.type = 'submit';
+                        submit.value = 'Load Game';
+                        submit.onclick = function(e) {
+                            var q = false;
+                            var radios = document.getElementsByName('game');
+                            for (var i=0; i<radios.length; i++) {
+                                if (radios[i].checked) {
+                                    var q = radios[i].value;
+                                    break;
+                                };
+                            };
+                            if (! q) {
+                                return;
+                            };
+                            while(document.body.firstChild) {
+                                document.body.removeChild(document.body.firstChild);
+                            };
+                            resolve(q);
+                        };
+                        a.appendChild(submit);
+                        document.body.appendChild(a);
                     };
-                    a.appendChild(document.createElement('br'));
-                    var submit = document.createElement('input');
-                    submit.type = 'submit';
-                    submit.value = 'Load Game';
-                    submit.onclick = function(e) {
-                        var q = false;
-                        var radios = document.getElementsByName('game');
-                        for (var i=0; i<radios.length; i++) {
-                            if (radios[i].checked) {
-                                var q = radios[i].value;
-                                break;
+                    if (extension == 'zip') {
+                        var reader = new FileReader();
+                        reader.onload = function(e) {
+                            if (e.target.result.split('.nes').length != 1 || e.target.result.split('.fds').length != 1 || e.target.result.split('.unif').length != 1 || e.target.result.split('.unf').length != 1) {
+                                resolve('nes');
+                            } else if (e.target.result.split('.z64').length != 1) {
+                                resolve('n64');
+                            } else if (e.target.result.split('.nds').length != 1) {
+                                resolve('nds');
+                            } else if (e.target.result.split('.gba').length != 1) {
+                                resolve('gba');
+                            } else if (e.target.result.split('.gb').length != 1) {
+                                resolve('gb');
+                            } else if (e.target.result.split('.smc').length != 1 || e.target.result.split('.fig').length != 1 || e.target.result.split('.sfc').length != 1 || e.target.result.split('.gd3').length != 1 || e.target.result.split('.gd7').length != 1 || e.target.result.split('.dx2').length != 1 || e.target.result.split('.bsx').length != 1 || e.target.result.split('.swc').length != 1) {
+                                resolve('snes');
+                            } else {
+                                askForCore();
                             };
                         };
-                        if (! q) {
-                            return;
-                        };
-                        while(document.body.firstChild) {
-                            document.body.removeChild(document.body.firstChild);
-                        };
-                        resolve(q);
+                        reader.readAsText(file);
+                    } else {
+                        askForCore();
                     };
-                    a.appendChild(submit);
-                    document.body.appendChild(a);
                 });
             }();
         };
@@ -443,10 +468,10 @@
     a.appendChild(document.createElement('br'));
     a.appendChild(document.createElement('br'));
     var p = document.createElement('p');
-    p.innerHTML = 'Game-Button: Version 3.4';
+    p.innerHTML = 'Game-Button: Version 3.5';
     a.appendChild(p);
     var b = document.createElement('p');
-    b.innerHTML = 'Button Last Updated: October 1, 2021';
+    b.innerHTML = 'Button Last Updated: October 4, 2021';
     a.appendChild(b);
     document.body.appendChild(a);
 })();
