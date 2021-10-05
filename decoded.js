@@ -294,7 +294,7 @@
                                         newText.push(text[i]);
                                     };
                                 };
-                                var text = newText.join('');
+                                var text = newText.join('').toLowerCase();
                             } else {
                                 var text = e.target.result.toLowerCase();
                             };
