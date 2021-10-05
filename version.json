@@ -1,1 +1,1 @@
-{"current_version": 3.5, "changes": "Support for detecting core in zip file"}
+{"current_version": 3.6, "changes": "Support for detecting core in zip, and 7z file. Added option to not auto-detect rom core and to not cache current rom"}
