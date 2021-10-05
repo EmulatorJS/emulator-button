@@ -1,7 +1,7 @@
 (async function() {
     fetch('https://raw.githack.com/ethanaobrien/emulator-button/main/version.json').then(async function(response) {
         var body = await response.text();
-        var usingVersion = 3.5;
+        var usingVersion = 3.6;
         var version = JSON.parse(body);
         if (usingVersion < version.current_version) {
             alert('You have version ' + usingVersion + ' but the newest version is ' + version.current_version + '. ' + version.changes);
@@ -149,7 +149,7 @@
                 var name = fileName.substr(0, fileName.length - fileName.split('.').pop().length - 1);
                 var newKey = {key: key, name: name, core: core, fileName: fileName};
                 for (var i=0; i<keys.length; i++) {
-                    if (keys[i].key == newKey.key) {
+                    if (keys[i].key == newKey.key && keys[i].core == newKey.core) {
                         return;
                     };
                 };
@@ -204,20 +204,20 @@
         while(document.body.firstChild) {
             document.body.removeChild(document.body.firstChild);
         };
-        var extension = file.name.split('.').pop();
+        var extension = file.name.split('.').pop().toLowerCase();
         var gameName = file.name.replaceAll("'", "\\'");
         var gameName = gameName.substr(0, gameName.length - extension.length - 1);
-        if (['fds', 'nes', 'unif', 'unf'].includes(extension)) {
+        if (['fds', 'nes', 'unif', 'unf'].includes(extension) && detectCore.checked) {
             var core = 'nes';
-        } else if (['z64'].includes(extension)) {
+        } else if (['z64'].includes(extension) && detectCore.checked) {
             var core = 'n64';
-        } else if (['smc', 'fig', 'sfc', 'gd3', 'gd7', 'dx2', 'bsx', 'swc'].includes(extension)) {
+        } else if (['smc', 'fig', 'sfc', 'gd3', 'gd7', 'dx2', 'bsx', 'swc'].includes(extension) && detectCore.checked) {
             var core = 'snes';
-        } else if (['nds'].includes(extension)) {
+        } else if (['nds'].includes(extension) && detectCore.checked) {
             var core = 'nds';
-        } else if (['gba'].includes(extension)) {
+        } else if (['gba'].includes(extension) && detectCore.checked) {
             var core = 'gba';
-        } else if (['gb'].includes(extension)) {
+        } else if (['gb'].includes(extension) && detectCore.checked) {
             var core = 'gb';
         } else {
             var core = await function() {
@@ -283,20 +283,32 @@
                         a.appendChild(submit);
                         document.body.appendChild(a);
                     };
-                    if (extension == 'zip') {
+                    if ((extension == 'zip' || extension == '7z') && detectCore.checked) {
                         var reader = new FileReader();
                         reader.onload = function(e) {
-                            if (e.target.result.split('.nes').length != 1 || e.target.result.split('.fds').length != 1 || e.target.result.split('.unif').length != 1 || e.target.result.split('.unf').length != 1) {
+                            if (extension == '7z') {
+                                var text = e.target.result.split('');
+                                var newText = [];
+                                for (var i=0; i<text.length; i++) {
+                                    if ('abcdefghijklmnopjrstuvwxyz.'.split('').includes(text[i].toLowerCase())) {
+                                        newText.push(text[i]);
+                                    };
+                                };
+                                var text = newText.join('').toLowerCase();
+                            } else {
+                                var text = e.target.result.toLowerCase();
+                            };
+                            if (text.split('.nes').length != 1 || text.split('.fds').length != 1 || text.split('.unif').length != 1 || text.split('.unf').length != 1) {
                                 resolve('nes');
-                            } else if (e.target.result.split('.z64').length != 1) {
+                            } else if (text.split('.z64').length != 1) {
                                 resolve('n64');
-                            } else if (e.target.result.split('.nds').length != 1) {
+                            } else if (text.split('.nds').length != 1) {
                                 resolve('nds');
-                            } else if (e.target.result.split('.gba').length != 1) {
+                            } else if (text.split('.gba').length != 1) {
                                 resolve('gba');
-                            } else if (e.target.result.split('.gb').length != 1) {
+                            } else if (text.split('.gb').length != 1) {
                                 resolve('gb');
-                            } else if (e.target.result.split('.smc').length != 1 || e.target.result.split('.fig').length != 1 || e.target.result.split('.sfc').length != 1 || e.target.result.split('.gd3').length != 1 || e.target.result.split('.gd7').length != 1 || e.target.result.split('.dx2').length != 1 || e.target.result.split('.bsx').length != 1 || e.target.result.split('.swc').length != 1) {
+                            } else if (text.split('.smc').length != 1 || text.split('.fig').length != 1 || text.split('.sfc').length != 1 || text.split('.gd3').length != 1 || text.split('.gd7').length != 1 || text.split('.dx2').length != 1 || text.split('.bsx').length != 1 || text.split('.swc').length != 1) {
                                 resolve('snes');
                             } else {
                                 askForCore();
@@ -322,7 +334,7 @@
         var script = document.createElement('script');
         script.src = 'https://rawcdn.githack.com/ethanaobrien/emulatorjs/main/data/loader.js';
         document.body.appendChild(script);
-        if (localStorage.getItem('emubuttonCacheRoms') != 'false') {
+        if (localStorage.getItem('emubuttonCacheRoms') != 'false' && cacheRom.checked) {
             var reader = new FileReader();
             reader.onload = function(e) {
                 createRomCache(e.target.result, file.name, core);
@@ -338,7 +350,28 @@
     a.appendChild(file);
     a.appendChild(document.createElement('br'));
     a.appendChild(document.createElement('br'));
+    a.appendChild(document.createElement('br'));
+    var detectCore = document.createElement('input');
+    detectCore.type = 'checkbox';
+    detectCore.checked = true;
+    detectCore.name = 'detectCore';
+    a.appendChild(detectCore);
+    var w = document.createElement('label');
+    w.for = 'detectCore';
+    w.innerHTML = 'Auto-detect core';
+    a.appendChild(w);
+    a.appendChild(document.createElement('br'));
+    a.appendChild(document.createElement('br'));
     var cachedRomsDiv = document.createElement('div');
+    var cacheRom = document.createElement('input');
+    cacheRom.type = 'checkbox';
+    cacheRom.checked = true;
+    cacheRom.name = 'cacheRom';
+    cachedRomsDiv.appendChild(cacheRom);
+    var w = document.createElement('label');
+    w.for = 'cacheRom';
+    w.innerHTML = 'Cache this rom';
+    cachedRomsDiv.appendChild(w);
     var p = document.createElement('h2');
     p.innerHTML = 'Cached Roms';
     cachedRomsDiv.appendChild(p);
@@ -468,10 +501,10 @@
     a.appendChild(document.createElement('br'));
     a.appendChild(document.createElement('br'));
     var p = document.createElement('p');
-    p.innerHTML = 'Game-Button: Version 3.5';
+    p.innerHTML = 'Game-Button: Version 3.6';
     a.appendChild(p);
     var b = document.createElement('p');
-    b.innerHTML = 'Button Last Updated: October 4, 2021';
+    b.innerHTML = 'Button Last Updated: October 5, 2021';
     a.appendChild(b);
     document.body.appendChild(a);
 })();
