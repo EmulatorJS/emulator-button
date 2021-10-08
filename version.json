@@ -1,1 +1,1 @@
-{"current_version": 3.6, "changes": "Support for detecting core in zip, and 7z file. Added option to not auto-detect rom core and to not cache current rom"}
+{"current_version": 3.6, "changes": "Offline Mode! Fixes bug when clicked when previous game running.", "jsFilesVersion": 1}
