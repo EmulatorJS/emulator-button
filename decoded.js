@@ -1,22 +1,29 @@
 (async function() {
-    try {
-        var version = await fetch('https://raw.githack.com/ethanaobrien/emulator-button/main/version.json');
-        var version = await version.text();
-        var version = JSON.parse(version);
-    } catch(e) {
-        var version = {
-            current_version: 4,
-            jsFilesVersion: 1
+    (async function() {
+        try {
+            var version = {
+                current_version: 4.1,
+                jsFilesVersion: 1
+            };
+            window.versionJSON = version;
+            var version = await fetch('https://raw.githack.com/ethanaobrien/emulator-button/main/version.json');
+            var version = await version.text();
+            var version = JSON.parse(version);
+        } catch(e) {
+            var version = {
+                current_version: 4.1,
+                jsFilesVersion: 1
+            };
         };
-    };
-    window.versionJSON = version;
-    var usingVersion = 4;
-    if (usingVersion < version.current_version) {
-        alert('You have version ' + usingVersion + ' but the newest version is ' + version.current_version + '. ' + version.changes);
-        if (confirm('Do you want to update? (Github Pages will open)')) {
-            window.open('https://raw.githack.com/ethanaobrien/emulator-button/main/index.html');
+        window.versionJSON = version;
+        var usingVersion = 4.1;
+        if (usingVersion < version.current_version) {
+            alert('You have version ' + usingVersion + ' but the newest version is ' + version.current_version + '. ' + version.changes);
+            if (confirm('Do you want to update? (Github Pages will open)')) {
+                window.open('https://raw.githack.com/ethanaobrien/emulator-button/main/index.html');
+            };
         };
-    };
+    })();
     if (window.VARRRSSZZ) {
         var a = [];
         var b = [];
@@ -39,12 +46,6 @@
         a.push(k);
     };
     window.VARRRSSZZ = a;
-    var offline = false;
-    try {
-        var a = await fetch('raw.githack.com');
-    } catch(e) {
-        var offline = true;
-    };
     if (String.prototype.replaceAll === undefined) {
         String.prototype.replaceAll = function(a, b) {
             return this.split(a).join(b);
@@ -174,46 +175,54 @@
         var cachedFilesVersion = localStorage.getItem('commonModulesCacheVersion');
         if (! cachedFilesVersion) {
             var forceUpdate = true;
-        } else if (window.versionJSON.jsFilesVersion && cachedFilesVersion < window.versionJSON.jsFilesVersion) {
+            document.getElementById('offlineStatus').innerHTML = 'Offline Mode: DOWNLOADING FILES';
+        } else if (window.versionJSON && window.versionJSON.jsFilesVersion && cachedFilesVersion < window.versionJSON.jsFilesVersion) {
             var forceUpdate = true;
+            document.getElementById('offlineStatus').innerHTML = 'Offline Mode: UPDATING FILES';
         } else {
             var forceUpdate = false;
+            document.getElementById('offlineStatus').innerHTML = 'Offline Mode: READY';
         };
         var baseUrl = 'https://rawcdn.githack.com/ethanaobrien/emulatorjs/main/data/';
-        getCachedFileUrl('loader', 'https://raw.githack.com/ethanaobrien/emulator-button/main/data/loader.js', js, forceUpdate);
-        getCachedFileUrl('webrtc', baseUrl + 'webrtc-adapter.js', js, forceUpdate);
-        getCachedFileUrl('rar', baseUrl + 'libunrar.js', js, forceUpdate);
-        getCachedFileUrl('zip', baseUrl + 'extractzip.js', js, forceUpdate);
-        getCachedFileUrl('7zip', baseUrl + 'extract7z.js', js, forceUpdate);
-        getCachedFileUrl('emulator', 'https://raw.githack.com/ethanaobrien/emulator-button/main/data/emulator.js', js, forceUpdate);
-        var v = await getCachedFileUrl('v', baseUrl + 'v.json', 'application/json', forceUpdate);
-        var v = await fetch(v);
-        var v = await v.text();
-        var v = JSON.parse(v);
-        var coresToCache = [
-            {system: 'gb', type: 'asmjs'},
-            {system: 'gba', type: 'asmjs'},
-            {system: 'n64', type: 'asmjs'},
-            {system: 'nds', type: 'asmjs'},
-            {system: 'nds', type: 'wasm'},
-            {system: 'nes', type: 'asmjs'},
-            {system: 'nes', type: 'wasm'},
-            {system: 'snes', type: 'asmjs'},
-            {system: 'snes', type: 'wasm'}
-        ];
-        for (var i=0; i<coresToCache.length; i++) {
-            var url = baseUrl + coresToCache[i].system + '-' + coresToCache[i].type + '.data';
-            var key = coresToCache[i].system + '-' + coresToCache[i].type + '.data';
-            var version = v[coresToCache[i].system].version;
-            var needToGet = await checkSystemCache(key, version);
-            if (needToGet) {
-                var data = await fetch(url);
-                var data = await data.arrayBuffer();
-                var data = new Uint8Array(data);
-                putInSystemCache(key, data, version);
+        try {
+            getCachedFileUrl('loader', 'https://raw.githack.com/ethanaobrien/emulator-button/main/data/loader.js', js, forceUpdate);
+            getCachedFileUrl('webrtc', baseUrl + 'webrtc-adapter.js', js, forceUpdate);
+            getCachedFileUrl('rar', baseUrl + 'libunrar.js', js, forceUpdate);
+            getCachedFileUrl('zip', baseUrl + 'extractzip.js', js, forceUpdate);
+            getCachedFileUrl('7zip', baseUrl + 'extract7z.js', js, forceUpdate);
+            getCachedFileUrl('emulator', 'https://raw.githack.com/ethanaobrien/emulator-button/main/data/emulator.js', js, forceUpdate);
+            var v = await getCachedFileUrl('v', baseUrl + 'v.json', 'application/json', forceUpdate);
+            var v = await fetch(v);
+            var v = await v.text();
+            var v = JSON.parse(v);
+            var coresToCache = [
+                {system: 'gb', type: 'asmjs'},
+                {system: 'gba', type: 'asmjs'},
+                {system: 'n64', type: 'asmjs'},
+                {system: 'nds', type: 'asmjs'},
+                {system: 'nds', type: 'wasm'},
+                {system: 'nes', type: 'asmjs'},
+                {system: 'nes', type: 'wasm'},
+                {system: 'snes', type: 'asmjs'},
+                {system: 'snes', type: 'wasm'}
+            ];
+            for (var i=0; i<coresToCache.length; i++) {
+                var url = baseUrl + coresToCache[i].system + '-' + coresToCache[i].type + '.data';
+                var key = coresToCache[i].system + '-' + coresToCache[i].type + '.data';
+                var version = v[coresToCache[i].system].version;
+                var needToGet = await checkSystemCache(key, version);
+                if (needToGet) {
+                    var data = await fetch(url);
+                    var data = await data.arrayBuffer();
+                    var data = new Uint8Array(data);
+                    putInSystemCache(key, data, version);
+                };
             };
+            localStorage.setItem('commonModulesCacheVersion', window.versionJSON.jsFilesVersion);
+            document.getElementById('offlineStatus').innerHTML = 'Offline Mode: READY';
+        } catch(e) {
+            document.getElementById('offlineStatus').innerHTML = 'Offline Mode: NOT READY';
         };
-        localStorage.setItem('commonModulesCacheVersion', window.versionJSON.jsFilesVersion);
     };
     function getCachedKeys() {
         return new Promise(function(resolve, reject) {
@@ -698,35 +707,22 @@
             toggleCacheSetting.innerHTML = 'Currently Caching Roms. Click to change';
             localStorage.removeItem('emubuttonCacheRoms');
             cachedRomsDiv.style = 'display:block;';
-        }
+        };
     };
     a.appendChild(document.createElement('br'));
     a.appendChild(toggleCacheSetting);
     a.appendChild(document.createElement('br'));
     a.appendChild(document.createElement('br'));
-    if (offline) {
-        try {
-            await getCachedFileUrl('v', 'https://raw.githack.com/ethanaobrien/emulatorjs/main/data/v.json', 'application/json');
-        } catch(e) {
-            var p = document.createElement('p');
-            p.innerHTML = 'Offline Mode: NOT READY';
-            document.body.appendChild(p);
-            a.appendChild(document.createElement('br'));
-            var p = document.createElement('p');
-            p.innerHTML = 'Please connect to the internet to cache needed files!';
-            document.body.appendChild(p);
-            return;
-        };
-        var p = document.createElement('p');
-        p.innerHTML = 'Offline Mode: READY';
-        a.appendChild(p);
-    };
     var p = document.createElement('p');
-    p.innerHTML = 'Game-Button: Version 4';
+    p.innerHTML = 'Game-Button: Version 4.1';
     a.appendChild(p);
     var b = document.createElement('p');
-    b.innerHTML = 'Button Last Updated: October 8, 2021';
+    b.innerHTML = 'Button Last Updated: October 9, 2021';
     a.appendChild(b);
     document.body.appendChild(a);
+    var p = document.createElement('p');
+    p.innerHTML = 'Offline Mode: CHECKING';
+    p.id = 'offlineStatus';
+    a.appendChild(p);
     cacheCommonModules();
 })();
