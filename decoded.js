@@ -2,8 +2,8 @@
     (async function() {
         try {
             var version = {
-                current_version: 4.1,
-                jsFilesVersion: 1
+                current_version: 4.2,
+                jsFilesVersion: false
             };
             window.versionJSON = version;
             var version = await fetch('https://raw.githack.com/ethanaobrien/emulator-button/main/version.json');
@@ -11,12 +11,12 @@
             var version = JSON.parse(version);
         } catch(e) {
             var version = {
-                current_version: 4.1,
-                jsFilesVersion: 1
+                current_version: 4.2,
+                jsFilesVersion: false
             };
         };
         window.versionJSON = version;
-        var usingVersion = 4.1;
+        var usingVersion = 4.2;
         if (usingVersion < version.current_version) {
             alert('You have version ' + usingVersion + ' but the newest version is ' + version.current_version + '. ' + version.changes);
             if (confirm('Do you want to update? (Github Pages will open)')) {
@@ -99,13 +99,13 @@
                             reject(e);
                             return;
                         };
-                        var text = await asd.text();
+                        var buffer = await asd.arrayBuffer();
                         var transaction = db.transaction(["mainEmuFiles"], "readwrite");
                         var objectStore = transaction.objectStore("mainEmuFiles");
-                        var request = objectStore.put(text, key);
+                        var request = objectStore.put(buffer, key);
                         request.onsuccess = function() {};
                         request.onerror = function() {};
-                        resolve(URL.createObjectURL(new Blob([text], {type: mime})));
+                        resolve(URL.createObjectURL(new Blob([buffer], {type: mime})));
                         return;
                     };
                     resolve(URL.createObjectURL(new Blob([file], {type: mime})));
@@ -714,10 +714,10 @@
     a.appendChild(document.createElement('br'));
     a.appendChild(document.createElement('br'));
     var p = document.createElement('p');
-    p.innerHTML = 'Game-Button: Version 4.1';
+    p.innerHTML = 'Game-Button: Version 4.2';
     a.appendChild(p);
     var b = document.createElement('p');
-    b.innerHTML = 'Button Last Updated: October 9, 2021';
+    b.innerHTML = 'Button Last Updated: October 1, 2021';
     a.appendChild(b);
     document.body.appendChild(a);
     var p = document.createElement('p');
