@@ -2,7 +2,7 @@
     (async function() {
         try {
             var version = {
-                current_version: 4.2,
+                current_version: 4.3,
                 jsFilesVersion: false
             };
             window.versionJSON = version;
@@ -11,12 +11,12 @@
             var version = JSON.parse(version);
         } catch(e) {
             var version = {
-                current_version: 4.2,
+                current_version: 4.3,
                 jsFilesVersion: false
             };
         };
         window.versionJSON = version;
-        var usingVersion = 4.2;
+        var usingVersion = 4.3;
         if (usingVersion < version.current_version) {
             alert('You have version ' + usingVersion + ' but the newest version is ' + version.current_version + '. ' + version.changes);
             if (confirm('Do you want to update? (Github Pages will open)')) {
@@ -587,7 +587,6 @@
         var label = document.createElement('label');
         label.for = 'game-' + i;
         label.innerHTML = games[i].name + ' - ';
-        c.appendChild(label);
         var y = document.createElement('a');
         y.href = 'javascript:void(0)';
         y.innerHTML = 'delete';
@@ -607,7 +606,25 @@
                 };
             };
         }(games[i], input, label, br, y);
-        c.appendChild(y);
+        var u = document.createElement('a');
+        u.href = 'javascript:void(0)';
+        u.innerHTML = 'download';
+        u.onclick = function(game) {
+            return async function() {
+                var blob = await getRomData(game.key);
+                var url = URL.createObjectURL(blob);
+                var a = document.createElement('a');
+                a.href = url;
+                a.download = game.fileName;
+                a.click();
+            };
+        }(games[i]);
+        var p = document.createElement('f');
+        p.innerHTML = ' - ';
+        label.appendChild(y);
+        label.appendChild(p);
+        label.appendChild(u);
+        c.appendChild(label);
         c.appendChild(br);
     };
     if (games.length == 0) {
@@ -714,10 +731,10 @@
     a.appendChild(document.createElement('br'));
     a.appendChild(document.createElement('br'));
     var p = document.createElement('p');
-    p.innerHTML = 'Game-Button: Version 4.2';
+    p.innerHTML = 'Game-Button: Version 4.3';
     a.appendChild(p);
     var b = document.createElement('p');
-    b.innerHTML = 'Button Last Updated: October 1, 2021';
+    b.innerHTML = 'Button Last Updated: November 1, 2021';
     a.appendChild(b);
     document.body.appendChild(a);
     var p = document.createElement('p');
