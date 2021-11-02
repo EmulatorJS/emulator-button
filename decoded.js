@@ -2,7 +2,7 @@
     (async function() {
         try {
             var version = {
-                current_version: 4.3,
+                current_version: 4.4,
                 jsFilesVersion: false
             };
             window.versionJSON = version;
@@ -11,12 +11,12 @@
             var version = JSON.parse(version);
         } catch(e) {
             var version = {
-                current_version: 4.3,
+                current_version: 4.4,
                 jsFilesVersion: false
             };
         };
         window.versionJSON = version;
-        var usingVersion = 4.3;
+        var usingVersion = 4.4;
         if (usingVersion < version.current_version) {
             alert('You have version ' + usingVersion + ' but the newest version is ' + version.current_version + '. ' + version.changes);
             if (confirm('Do you want to update? (Github Pages will open)')) {
@@ -312,41 +312,45 @@
             };
         });
     };
-    function createRomCache(data, fileName, core) {
-        var openRequest = indexedDB.open("emulatorGameCache", 1);
-        openRequest.onerror = function() {};
-        openRequest.onsuccess = function() {
-            var db = openRequest.result;
-            var transaction = db.transaction(["emulatorGameCache"], "readwrite");
-            var objectStore = transaction.objectStore("emulatorGameCache");
-            var currentKeys = objectStore.get('keys');
-            currentKeys.onsuccess = function() {
-                var keys = currentKeys.result;
-                if (! keys) {var keys = []};
-                var key = fileName.split(' ').join('').toLowerCase();
-                var key = key.substr(0, key.length - key.split('.').pop().length - 1);
-                var name = fileName.substr(0, fileName.length - fileName.split('.').pop().length - 1);
-                var newKey = {key: key, name: name, core: core, fileName: fileName};
-                for (var i=0; i<keys.length; i++) {
-                    if (keys[i].key == newKey.key && keys[i].core == newKey.core) {
-                        return;
+    async function createRomCache(data, fileName, core) {
+        return await new Promise(function(resolve, reject) {
+            var openRequest = indexedDB.open("emulatorGameCache", 1);
+            openRequest.onerror = function() {};
+            openRequest.onsuccess = function() {
+                var db = openRequest.result;
+                var transaction = db.transaction(["emulatorGameCache"], "readwrite");
+                var objectStore = transaction.objectStore("emulatorGameCache");
+                var currentKeys = objectStore.get('keys');
+                currentKeys.onsuccess = function() {
+                    var keys = currentKeys.result;
+                    if (! keys) {var keys = []};
+                    var key = fileName.split(' ').join('').toLowerCase();
+                    var key = key.substr(0, key.length - key.split('.').pop().length - 1);
+                    var name = fileName.substr(0, fileName.length - fileName.split('.').pop().length - 1);
+                    var newKey = {key: key, name: name, core: core, fileName: fileName};
+                    for (var i=0; i<keys.length; i++) {
+                        if (keys[i].key == newKey.key && keys[i].core == newKey.core) {
+                            resolve();
+                            return;
+                        };
                     };
+                    keys.push(newKey);
+                    var request = objectStore.put(keys, 'keys');
+                    request.onsuccess = function() {};
+                    request.onerror = function() {};
+                    var request2 = objectStore.put(data, key);
+                    request2.onsuccess = function() {};
+                    request2.onerror = function() {};
+                    resolve();
                 };
-                keys.push(newKey);
-                var request = objectStore.put(keys, 'keys');
-                request.onsuccess = function() {};
-                request.onerror = function() {};
-                var request2 = objectStore.put(data, key);
-                request2.onsuccess = function() {};
-                request2.onerror = function() {};
             };
-        };
-        openRequest.onupgradeneeded = function() {
-            var db = openRequest.result;
-            if (! db.objectStoreNames.contains('emulatorGameCache')) {
-                db.createObjectStore('emulatorGameCache');
+            openRequest.onupgradeneeded = function() {
+                var db = openRequest.result;
+                if (! db.objectStoreNames.contains('emulatorGameCache')) {
+                    db.createObjectStore('emulatorGameCache');
+                };
             };
-        };
+        });
     };
     var resetPageContents = function() {
         while(document.body.firstChild) {
@@ -574,64 +578,68 @@
     cachedRomsDiv.appendChild(p);
     cachedRomsDiv.appendChild(document.createElement('br'));
     var games = await getCachedKeys();
-    games.sort(gamezSortFunc);
     var c = document.createElement('div');
-    for (var i=0; i<games.length; i++) {
-        var br = document.createElement('br');
-        var input = document.createElement('input');
-        input.type = 'radio';
-        input.id = 'game-' + i;
-        input.name = 'game';
-        input.value = i;
-        c.appendChild(input);
-        var label = document.createElement('label');
-        label.for = 'game-' + i;
-        label.innerHTML = games[i].name + ' - ';
-        var y = document.createElement('a');
-        y.href = 'javascript:void(0)';
-        y.innerHTML = 'delete';
-        y.onclick = function(info, div1, div2, div3, div4) {
-            return async function() {
-                if (!confirm('Are you sure you want to delete ' + info.name + ' from rom cache?')) {return};
-                div1.remove();
-                div2.remove();
-                div3.remove();
-                div4.remove();
-                await deleteRom(info.key);
-                alert('deleted!');
-                if (! c.firstChild) {
-                    var p = document.createElement('p');
-                    p.innerHTML = 'There are no cached Roms';
-                    c.appendChild(p);
+    function showCachedRoms(games, c) {
+        games.sort(gamezSortFunc);
+        for (var i=0; i<games.length; i++) {
+            var br = document.createElement('br');
+            var input = document.createElement('input');
+            input.type = 'radio';
+            input.id = 'game-' + i;
+            input.name = 'game';
+            input.value = i;
+            c.appendChild(input);
+            var label = document.createElement('label');
+            label.for = 'game-' + i;
+            label.innerHTML = games[i].name + ' - ';
+            var y = document.createElement('a');
+            y.href = 'javascript:void(0)';
+            y.innerHTML = 'delete';
+            y.onclick = function(info, div1, div2, div3, div4) {
+                return async function() {
+                    if (!confirm('Are you sure you want to delete ' + info.name + ' from rom cache?')) {return};
+                    div1.remove();
+                    div2.remove();
+                    div3.remove();
+                    div4.remove();
+                    await deleteRom(info.key);
+                    alert('deleted!');
+                    if (! c.firstChild) {
+                        var p = document.createElement('p');
+                        p.innerHTML = 'There are no cached Roms';
+                        c.appendChild(p);
+                    };
                 };
-            };
-        }(games[i], input, label, br, y);
-        var u = document.createElement('a');
-        u.href = 'javascript:void(0)';
-        u.innerHTML = 'download';
-        u.onclick = function(game) {
-            return async function() {
-                var blob = await getRomData(game.key);
-                var url = URL.createObjectURL(blob);
-                var a = document.createElement('a');
-                a.href = url;
-                a.download = game.fileName;
-                a.click();
-            };
-        }(games[i]);
-        var p = document.createElement('f');
-        p.innerHTML = ' - ';
-        label.appendChild(y);
-        label.appendChild(p);
-        label.appendChild(u);
-        c.appendChild(label);
-        c.appendChild(br);
+            }(games[i], input, label, br, y);
+            var u = document.createElement('a');
+            u.href = 'javascript:void(0)';
+            u.innerHTML = 'download';
+            u.onclick = function(game) {
+                return async function() {
+                    var blob = await getRomData(game.key);
+                    var url = URL.createObjectURL(blob);
+                    var a = document.createElement('a');
+                    a.href = url;
+                    a.download = game.fileName;
+                    a.click();
+                };
+            }(games[i]);
+            var p = document.createElement('f');
+            p.innerHTML = ' - ';
+            label.appendChild(y);
+            label.appendChild(p);
+            label.appendChild(u);
+            c.appendChild(label);
+            c.appendChild(br);
+        };
+        if (games.length == 0) {
+            var p = document.createElement('p');
+            p.innerHTML = 'There are no cached Roms';
+            c.appendChild(p);
+        };
+        return c;
     };
-    if (games.length == 0) {
-        var p = document.createElement('p');
-        p.innerHTML = 'There are no cached Roms';
-        c.appendChild(p);
-    };
+    var c = showCachedRoms(games, c);
     c.id = 'cachedRoms';
     cachedRomsDiv.appendChild(c);
     cachedRomsDiv.appendChild(document.createElement('br'));
@@ -641,10 +649,12 @@
     submit.type = 'submit';
     submit.value = 'Load Game';
     submit.onclick = async function(e) {
+        var games = await getCachedKeys();
+        games.sort(gamezSortFunc);
         var q = false;
         var radios = document.getElementsByName('game');
         for (var i=0; i<radios.length; i++) {
-            if (radios[i].checked) {
+            if (radios[i].checked && games[radios[i].value]) {
                 var q = games[radios[i].value];
                 break;
             };
@@ -693,6 +703,9 @@
     cachedRomsDiv.appendChild(document.createElement('br'));
     var clear = document.createElement('button');
     clear.onclick = function() {
+        if (! confirm('Are you sure you want to clear the rom cache')) {
+            return;
+        };
         indexedDB.deleteDatabase('emulatorGameCache');
         while(document.getElementById('cachedRoms').firstChild) {
             document.getElementById('cachedRoms').removeChild(document.getElementById('cachedRoms').firstChild);
@@ -708,6 +721,78 @@
         cachedRomsDiv.style = 'display:none;';
     };
     cachedRomsDiv.appendChild(document.createElement('br'));
+    cachedRomsDiv.appendChild(document.createElement('br'));
+    var q = document.createElement('a');
+    q.innerHTML = 'Restore saved export (requires internet)';
+    q.href = 'javascript:void(0)';
+    q.onclick = function(q) {
+        return function() {
+            var p = document.createElement('p');
+            p.innerHTML = 'starting...';
+            q.appendChild(p);
+            var script = document.createElement('script');
+            script.onload = function() {
+                var a = document.createElement('input');
+                a.type = 'file';
+                a.onchange = async function(e) {
+                    var zip = new JSZip();
+                    var contents = await zip.loadAsync(e.target.files[0]);
+                    var keys = JSON.parse(await contents.file("keys.json").async("string"));
+                    for (var i=0; i<keys.length; i++) {
+                        p.innerHTML = 'restoring: '+i+'/'+keys.length;
+                        if (contents.files[keys[i].fileName]) {
+                            var data = await contents.file(keys[i].fileName).async("arrayBuffer");
+                            await createRomCache(data, keys[i].fileName, keys[i].core);
+                        };
+                    };
+                    p.innerHTML = 'finished';
+                    setTimeout(function() {p.remove();}, 5000);
+                    var games = await getCachedKeys();
+                    while(document.getElementById('cachedRoms').firstChild) {
+                        document.getElementById('cachedRoms').removeChild(document.getElementById('cachedRoms').firstChild);
+                    };
+                    showCachedRoms(games, document.getElementById('cachedRoms'));
+                };
+                a.click();
+            };
+            script.src = 'https://raw.githack.com/Stuk/jszip/master/dist/jszip.js';
+            document.body.appendChild(script);
+        };
+    }(cachedRomsDiv);
+    cachedRomsDiv.appendChild(q);
+    cachedRomsDiv.appendChild(document.createElement('br'));
+    cachedRomsDiv.appendChild(document.createElement('br'));
+    var q = document.createElement('a');
+    q.innerHTML = 'Save imported roms (requires internet)';
+    q.href = 'javascript:void(0)';
+    q.onclick = function(q, y) {
+        return function() {
+            q.remove();
+            var p = document.createElement('p');
+            p.innerHTML = 'Starting...';
+            y.appendChild(p);
+            var script = document.createElement('script');
+            script.onload = async function() {
+                var zip = new JSZip();
+                var keys = await getCachedKeys();
+                zip.file('keys.json', new Blob([JSON.stringify(keys)]));
+                for (var i=0;i<keys.length; i++) {
+                    zip.file(keys[i].fileName, await getRomData(keys[i].key));
+                };
+                var blob = await zip.generateAsync({type:"blob"}, function updateCallback(metadata) {
+                    var zipStatus = 'Zipping: '+metadata.percent.toFixed(2)+'%';
+                    p.innerHTML = zipStatus;
+                });
+                var a = document.createElement('a');
+                a.href = URL.createObjectURL(blob);
+                a.download = 'emulator-button.export';
+                a.click();
+            };
+            script.src = 'https://raw.githack.com/Stuk/jszip/master/dist/jszip.js';
+            document.body.appendChild(script);
+        };
+    }(q, cachedRomsDiv);
+    cachedRomsDiv.appendChild(q);
     a.appendChild(cachedRomsDiv);
     var toggleCacheSetting = document.createElement('button');
     if (localStorage.getItem('emubuttonCacheRoms') != 'false') {
@@ -731,15 +816,15 @@
     a.appendChild(document.createElement('br'));
     a.appendChild(document.createElement('br'));
     var p = document.createElement('p');
-    p.innerHTML = 'Game-Button: Version 4.3';
+    p.innerHTML = 'Game-Button: Version 4.4';
     a.appendChild(p);
     var b = document.createElement('p');
-    b.innerHTML = 'Button Last Updated: November 1, 2021';
+    b.innerHTML = 'Button Last Updated: November 2, 2021';
     a.appendChild(b);
-    document.body.appendChild(a);
     var p = document.createElement('p');
     p.innerHTML = 'Offline Mode: CHECKING';
     p.id = 'offlineStatus';
     a.appendChild(p);
+    document.body.appendChild(a);
     cacheCommonModules();
 })();
