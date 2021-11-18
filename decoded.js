@@ -2,7 +2,7 @@
     (async function() {
         try {
             var version = {
-                current_version: 4.4,
+                current_version: 4.5,
                 jsFilesVersion: false
             };
             window.versionJSON = version;
@@ -11,12 +11,12 @@
             var version = JSON.parse(version);
         } catch(e) {
             var version = {
-                current_version: 4.4,
+                current_version: 4.5,
                 jsFilesVersion: false
             };
         };
         window.versionJSON = version;
-        var usingVersion = 4.4;
+        var usingVersion = 4.5;
         if (usingVersion < version.current_version) {
             alert('You have version ' + usingVersion + ' but the newest version is ' + version.current_version + '. ' + version.changes);
             if (confirm('Do you want to update? (Github Pages will open)')) {
@@ -179,6 +179,7 @@
         } else if (window.versionJSON && window.versionJSON.jsFilesVersion && cachedFilesVersion < window.versionJSON.jsFilesVersion) {
             var forceUpdate = true;
             document.getElementById('offlineStatus').innerHTML = 'Offline Mode: UPDATING FILES';
+            localStorage.setItem('commonModulesCacheVersion', window.versionJSON.jsFilesVersion);
         } else {
             var forceUpdate = false;
             document.getElementById('offlineStatus').innerHTML = 'Offline Mode: READY';
@@ -218,7 +219,6 @@
                     putInSystemCache(key, data, version);
                 };
             };
-            localStorage.setItem('commonModulesCacheVersion', window.versionJSON.jsFilesVersion);
             document.getElementById('offlineStatus').innerHTML = 'Offline Mode: READY';
         } catch(e) {
             document.getElementById('offlineStatus').innerHTML = 'Offline Mode: NOT READY';
@@ -816,10 +816,10 @@
     a.appendChild(document.createElement('br'));
     a.appendChild(document.createElement('br'));
     var p = document.createElement('p');
-    p.innerHTML = 'Game-Button: Version 4.4';
+    p.innerHTML = 'Game-Button: Version 4.5';
     a.appendChild(p);
     var b = document.createElement('p');
-    b.innerHTML = 'Button Last Updated: November 2, 2021';
+    b.innerHTML = 'Button Last Updated: November 17, 2021';
     a.appendChild(b);
     var p = document.createElement('p');
     p.innerHTML = 'Offline Mode: CHECKING';
