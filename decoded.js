@@ -180,7 +180,7 @@
         if (! cachedFilesVersion) {
             var forceUpdate = true;
             status.innerHTML = 'Offline Mode: DOWNLOADING FILES';
-        } else if (true || window.versionJSON && window.versionJSON.jsFilesVersion && cachedFilesVersion < window.versionJSON.jsFilesVersion) {
+        } else if (window.versionJSON && window.versionJSON.jsFilesVersion && cachedFilesVersion < window.versionJSON.jsFilesVersion) {
             var forceUpdate = true;
             status.innerHTML = 'Offline Mode: UPDATING FILES';
             localStorage.setItem('commonModulesCacheVersion', window.versionJSON.jsFilesVersion);
