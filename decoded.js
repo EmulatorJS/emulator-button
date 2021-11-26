@@ -2,7 +2,7 @@
     (async function() {
         try {
             var version = {
-                current_version: 4.5,
+                current_version: 4.6,
                 jsFilesVersion: false
             };
             window.versionJSON = version;
@@ -11,12 +11,12 @@
             var version = JSON.parse(version);
         } catch(e) {
             var version = {
-                current_version: 4.5,
+                current_version: 4.6,
                 jsFilesVersion: false
             };
         };
         window.versionJSON = version;
-        var usingVersion = 4.5;
+        var usingVersion = 4.6;
         if (usingVersion < version.current_version) {
             alert('You have version ' + usingVersion + ' but the newest version is ' + version.current_version + '. ' + version.changes);
             if (confirm('Do you want to update? (Github Pages will open)')) {
@@ -173,16 +173,20 @@
     async function cacheCommonModules() {
         var js = 'text/javascript';
         var cachedFilesVersion = localStorage.getItem('commonModulesCacheVersion');
+        if (typeof cachedFilesVersion != 'number') {
+            localStorage.removeItem('commonModulesCacheVersion');
+        };
+        var status = document.getElementById('offlineStatus');
         if (! cachedFilesVersion) {
             var forceUpdate = true;
-            document.getElementById('offlineStatus').innerHTML = 'Offline Mode: DOWNLOADING FILES';
-        } else if (window.versionJSON && window.versionJSON.jsFilesVersion && cachedFilesVersion < window.versionJSON.jsFilesVersion) {
+            status.innerHTML = 'Offline Mode: DOWNLOADING FILES';
+        } else if (true || window.versionJSON && window.versionJSON.jsFilesVersion && cachedFilesVersion < window.versionJSON.jsFilesVersion) {
             var forceUpdate = true;
-            document.getElementById('offlineStatus').innerHTML = 'Offline Mode: UPDATING FILES';
+            status.innerHTML = 'Offline Mode: UPDATING FILES';
             localStorage.setItem('commonModulesCacheVersion', window.versionJSON.jsFilesVersion);
         } else {
             var forceUpdate = false;
-            document.getElementById('offlineStatus').innerHTML = 'Offline Mode: READY';
+            status.innerHTML = 'Offline Mode: READY';
         };
         var baseUrl = 'https://rawcdn.githack.com/ethanaobrien/emulatorjs/main/data/';
         try {
@@ -192,6 +196,7 @@
             getCachedFileUrl('zip', baseUrl + 'extractzip.js', js, forceUpdate);
             getCachedFileUrl('7zip', baseUrl + 'extract7z.js', js, forceUpdate);
             getCachedFileUrl('emulator', 'https://raw.githack.com/ethanaobrien/emulator-button/main/data/emulator.js', js, forceUpdate);
+            getCachedFileUrl('rarMem', baseUrl+'libunrar.js.mem', js, forceUpdate);
             var v = await getCachedFileUrl('v', baseUrl + 'v.json', 'application/json', forceUpdate);
             var v = await fetch(v);
             var v = await v.text();
@@ -219,9 +224,9 @@
                     putInSystemCache(key, data, version);
                 };
             };
-            document.getElementById('offlineStatus').innerHTML = 'Offline Mode: READY';
+            status.innerHTML = 'Offline Mode: READY';
         } catch(e) {
-            document.getElementById('offlineStatus').innerHTML = 'Offline Mode: NOT READY';
+            status.innerHTML = 'Offline Mode: NOT READY';
         };
     };
     function getCachedKeys() {
@@ -371,6 +376,40 @@
             };
         };
     };
+    async function loadGame(fileURL, gameName, core) {
+        var js = 'text/javascript';
+        var base = 'https://raw.githack.com/ethanaobrien/emulatorjs/main/data/';
+        var loader = await getCachedFileUrl('loader', 'https://raw.githack.com/ethanaobrien/emulator-button/main/data/loader.js', js);
+        var webrtc = await getCachedFileUrl('webrtc', base+'webrtc-adapter.js', js);
+        var rar = await getCachedFileUrl('rar', base+'libunrar.js', js);
+        var rarMem = await getCachedFileUrl('rarMem', base+'libunrar.js.mem', 'application/json');
+        var zip = await getCachedFileUrl('zip', base+'extractzip.js', js);
+        var sevenzip = await getCachedFileUrl('7zip', base+'extract7z.js', js);
+        var emulator = await getCachedFileUrl('emulator', 'https://raw.githack.com/ethanaobrien/emulator-button/main/data/emulator.js', js);
+        var v = await getCachedFileUrl('v', base+'v.json', 'application/json');
+        var paths = {
+            "v": v,
+            "emulator": emulator,
+            "7z": sevenzip,
+            "zip": zip,
+            "rar": rar,
+            "webrtc": webrtc,
+            "rarMem": rarMem
+        };
+        var a = document.createElement('div');
+        a.style = "width:640px;height:480px;max-width:100%";
+        var b = document.createElement('div');
+        b.id = 'game';
+        a.appendChild(b);
+        document.body.appendChild(a);
+        var script = document.createElement('script');
+        script.innerHTML = "EJS_player = '#game'; EJS_biosUrl = ''; EJS_gameName = '" + gameName + "'; EJS_gameUrl = '" + fileURL + "'; EJS_core = '" + core + "'; EJS_lightgun = false; EJS_pathtodata = '"+base+"'; EJS_PATHS = " + JSON.stringify(paths) + ";";
+        document.body.appendChild(script);
+        var script = document.createElement('script');
+        script.src = loader;
+        document.body.appendChild(script);
+        
+    };
     resetPageContents();
     var a = document.createElement('div');
     a.style = 'padding: 50px;';
@@ -387,23 +426,8 @@
         while(document.body.firstChild) {
             document.body.removeChild(document.body.firstChild);
         };
-        var js = 'text/javascript';
-        var loader = await getCachedFileUrl('loader', 'https://raw.githack.com/ethanaobrien/emulator-button/main/data/loader.js', js);
-        var webrtc = await getCachedFileUrl('webrtc', 'https://raw.githack.com/ethanaobrien/emulatorjs/main/data/webrtc-adapter.js', js);
-        var rar = await getCachedFileUrl('rar', 'https://raw.githack.com/ethanaobrien/emulatorjs/main/data/libunrar.js', js);
-        var zip = await getCachedFileUrl('zip', 'https://raw.githack.com/ethanaobrien/emulatorjs/main/data/extractzip.js', js);
-        var sevenzip = await getCachedFileUrl('7zip', 'https://raw.githack.com/ethanaobrien/emulatorjs/main/data/extract7z.js', js);
-        var emulator = await getCachedFileUrl('emulator', 'https://raw.githack.com/ethanaobrien/emulator-button/main/data/emulator.js', js);
-        var v = await getCachedFileUrl('v', 'https://raw.githack.com/ethanaobrien/emulatorjs/main/data/v.json', 'application/json');
-        var paths = {
-            "v": v,
-            "emulator": emulator,
-            "7z": sevenzip,
-            "zip": zip,
-            "rar": rar,
-            "webrtc": webrtc
-        };
         var extension = file.name.split('.').pop().toLowerCase();
+        var detectCore = document.createElement('input');
         var gameName = file.name.replaceAll("'", "\\'");
         var gameName = gameName.substr(0, gameName.length - extension.length - 1);
         if (['fds', 'nes', 'unif', 'unf'].includes(extension) && detectCore.checked) {
@@ -431,6 +455,7 @@
                                      "PlayStation": "psx",
                                      "Virtual Boy": "vb",
                                      "Sega Mega Drive": "segaMD",
+                                     "Sega Master System": "segaMS",
                                      "Sega CD": "segaCD",
                                      "Atari Lynx": "lynx",
                                      "Sega 32X": "sega32x",
@@ -521,18 +546,7 @@
             }();
         };
         var fileURL = URL.createObjectURL(new Blob([file]));
-        var a = document.createElement('div');
-        a.style = "width:640px;height:480px;max-width:100%";
-        var b = document.createElement('div');
-        b.id = 'game';
-        a.appendChild(b);
-        document.body.appendChild(a);
-        var script = document.createElement('script');
-        script.innerHTML = "EJS_player = '#game'; EJS_biosUrl = ''; EJS_gameName = '" + gameName + "'; EJS_gameUrl = '" + fileURL + "'; EJS_core = '" + core + "'; EJS_lightgun = false; EJS_pathtodata = 'https://rawcdn.githack.com/ethanaobrien/emulatorjs/main/data/'; EJS_PATHS = " + JSON.stringify(paths) + ";";
-        document.body.appendChild(script);
-        var script = document.createElement('script');
-        script.src = loader;
-        document.body.appendChild(script);
+        loadGame(fileURL, gameName, core);
         if (localStorage.getItem('emubuttonCacheRoms') != 'false' && cacheRom.checked) {
             var reader = new FileReader();
             reader.onload = function(e) {
@@ -662,41 +676,12 @@
         if (! q) {return};
         removeDropListen();
         var game = q;
-        var js = 'text/javascript';
-        var loader = await getCachedFileUrl('loader', 'https://raw.githack.com/ethanaobrien/emulator-button/main/data/loader.js', js);
-        var webrtc = await getCachedFileUrl('webrtc', 'https://raw.githack.com/ethanaobrien/emulatorjs/main/data/webrtc-adapter.js', js);
-        var rar = await getCachedFileUrl('rar', 'https://raw.githack.com/ethanaobrien/emulatorjs/main/data/libunrar.js', js);
-        var zip = await getCachedFileUrl('zip', 'https://raw.githack.com/ethanaobrien/emulatorjs/main/data/extractzip.js', js);
-        var sevenzip = await getCachedFileUrl('7zip', 'https://raw.githack.com/ethanaobrien/emulatorjs/main/data/extract7z.js', js);
-        var emulator = await getCachedFileUrl('emulator', 'https://raw.githack.com/ethanaobrien/emulator-button/main/data/emulator.js', js);
-        var v = await getCachedFileUrl('v', 'https://raw.githack.com/ethanaobrien/emulatorjs/main/data/v.json', 'application/json');
-        var paths = {
-            "v": v,
-            "emulator": emulator,
-            "7z": sevenzip,
-            "zip": zip,
-            "rar": rar,
-            "webrtc": webrtc
-        };
+        
         while(document.body.firstChild) {
             document.body.removeChild(document.body.firstChild);
         };
         var blob = await getRomData(game.key);
-        var fileURL = URL.createObjectURL(blob);
-        var gameName = game.name.replaceAll("'", "\\'");
-        var core = game.core;
-        var a = document.createElement('div');
-        a.style = "width:640px;height:480px;max-width:100%";
-        var b = document.createElement('div');
-        b.id = 'game';
-        a.appendChild(b);
-        document.body.appendChild(a);
-        var script = document.createElement('script');
-        script.innerHTML = "EJS_player = '#game'; EJS_biosUrl = ''; EJS_gameName = '" + gameName + "'; EJS_gameUrl = '" + fileURL + "'; EJS_core = '" + core + "'; EJS_lightgun = false; EJS_pathtodata = 'https://rawcdn.githack.com/ethanaobrien/emulatorjs/main/data/'; EJS_PATHS = " + JSON.stringify(paths) + ";";
-        document.body.appendChild(script);
-        var script = document.createElement('script');
-        script.src = loader;
-        document.body.appendChild(script);
+        loadGame(URL.createObjectURL(blob), game.name.replaceAll("'", "\\'"), game.core);
     };
     cachedRomsDiv.appendChild(submit);
     cachedRomsDiv.appendChild(document.createElement('br'));
@@ -816,15 +801,17 @@
     a.appendChild(document.createElement('br'));
     a.appendChild(document.createElement('br'));
     var p = document.createElement('p');
-    p.innerHTML = 'Game-Button: Version 4.5';
+    p.innerHTML = 'Game-Button: Version 4.6';
     a.appendChild(p);
     var b = document.createElement('p');
-    b.innerHTML = 'Button Last Updated: November 17, 2021';
+    b.innerHTML = 'Button Last Updated: November 26, 2021';
     a.appendChild(b);
     var p = document.createElement('p');
     p.innerHTML = 'Offline Mode: CHECKING';
     p.id = 'offlineStatus';
     a.appendChild(p);
     document.body.appendChild(a);
-    cacheCommonModules();
+    setTimeout(function() {
+        cacheCommonModules();
+    }, 2000);
 })();
