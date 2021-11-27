@@ -2,7 +2,7 @@
     (async function() {
         try {
             var version = {
-                current_version: 4.6,
+                current_version: 4.7,
                 jsFilesVersion: false
             };
             window.versionJSON = version;
@@ -11,12 +11,12 @@
             var version = JSON.parse(version);
         } catch(e) {
             var version = {
-                current_version: 4.6,
+                current_version: 4.7,
                 jsFilesVersion: false
             };
         };
         window.versionJSON = version;
-        var usingVersion = 4.6;
+        var usingVersion = 4.7;
         if (usingVersion < version.current_version) {
             alert('You have version ' + usingVersion + ' but the newest version is ' + version.current_version + '. ' + version.changes);
             if (confirm('Do you want to update? (Github Pages will open)')) {
@@ -427,7 +427,6 @@
             document.body.removeChild(document.body.firstChild);
         };
         var extension = file.name.split('.').pop().toLowerCase();
-        var detectCore = document.createElement('input');
         var gameName = file.name.replaceAll("'", "\\'");
         var gameName = gameName.substr(0, gameName.length - extension.length - 1);
         if (['fds', 'nes', 'unif', 'unf'].includes(extension) && detectCore.checked) {
@@ -801,7 +800,7 @@
     a.appendChild(document.createElement('br'));
     a.appendChild(document.createElement('br'));
     var p = document.createElement('p');
-    p.innerHTML = 'Game-Button: Version 4.6';
+    p.innerHTML = 'Game-Button: Version 4.7';
     a.appendChild(p);
     var b = document.createElement('p');
     b.innerHTML = 'Button Last Updated: November 26, 2021';
