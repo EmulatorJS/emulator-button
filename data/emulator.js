@@ -16188,6 +16188,7 @@ var EJS = function(_0x574f5e) {
                         } else {
                             _0x2c1832[i].value = ''
                         }
+                        _0x2c1832[i].setAttribute('data-value', _0x2c1832[i].value)
                     }
                 }), _0x1093f4.call(this, _0xa88a13.elements.dialogs.gamepad.querySelector('.' .concat(_0x378b5c.classNames['btn-clear'])), 'click', function(_0x5f19bd) {
                     var c = {0:{}, 1:{}, 2:{}, 3:{}}
@@ -16202,6 +16203,7 @@ var EJS = function(_0x574f5e) {
                     var _0x2c1832 = _0xa88a13.elements.dialogs.gamepad.querySelectorAll('input')
                     for (var i=0; i<_0x2c1832.length; i++) {
                         _0x2c1832[i].value = ''
+                        _0x2c1832[i].setAttribute('data-value', '')
                     }
                 }), _0x1093f4.call(this, _0xa88a13.elements.dialogs.gamepad.querySelector('.' .concat(_0x378b5c.classNames['btn-cancel'])), 'click', function(_0x16d598) {
                     return _0x132da7(_0xa88a13.elements.dialogs.gamepad, true), _0xa88a13.elements.container.focus(), _0x16d598.stopPropagation(), !0x1;
