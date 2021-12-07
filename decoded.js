@@ -1,8 +1,9 @@
 (async function() {
+    var ce = function(e) {return document.createElement(e);};
     (async function() {
         try {
             var version = {
-                current_version: 4.7,
+                current_version: 4.8,
                 jsFilesVersion: false
             };
             window.versionJSON = version;
@@ -11,12 +12,12 @@
             var version = JSON.parse(version);
         } catch(e) {
             var version = {
-                current_version: 4.7,
+                current_version: 4.8,
                 jsFilesVersion: false
             };
         };
         window.versionJSON = version;
-        var usingVersion = 4.7;
+        var usingVersion = 4.8;
         if (usingVersion < version.current_version) {
             alert('You have version ' + usingVersion + ' but the newest version is ' + version.current_version + '. ' + version.changes);
             if (confirm('Do you want to update? (Github Pages will open)')) {
@@ -49,6 +50,20 @@
     if (String.prototype.replaceAll === undefined) {
         String.prototype.replaceAll = function(a, b) {
             return this.split(a).join(b);
+        };
+    };
+    var pressText = '';
+    function keyDDown(e) {
+        var key = e.key;
+        if (key == 'Backspace') {
+            pressText = '';
+        } else {
+            pressText += key
+        };
+        if (pressText == 'dev mode') {
+            pressText = '';
+            document.getElementById('dev').style = 'display:block;';
+            localStorage.setItem('emuButtonDev', true);
         };
     };
     function drag(evt) {
@@ -365,7 +380,7 @@
         if (! document.body.style) {document.body.style = {};};
         document.body.style.backgroundColor = 'white';
         if (document.getElementsByTagName('title')[0]) {
-            var title = document.createElement('title');
+            var title = ce('title');
             title.innerHTML = document.getElementsByTagName('title')[0].innerHTML;
             while(document.head.firstChild) {
                 document.head.removeChild(document.head.firstChild);
@@ -377,7 +392,8 @@
             };
         };
     };
-    async function loadGame(fileURL, gameName, core) {
+    async function loadGame(fileURL, gameName, core, adUrl) {
+        document.removeEventListener('keydown', keyDDown, false);
         var js = 'text/javascript';
         var base = 'https://raw.githack.com/ethanaobrien/emulatorjs/main/data/';
         var loader = await getCachedFileUrl('loader', 'https://raw.githack.com/ethanaobrien/emulator-button/main/data/loader.js', js);
@@ -397,33 +413,36 @@
             "webrtc": webrtc,
             "rarMem": rarMem
         };
-        var a = document.createElement('div');
+        var a = ce('div');
         a.style = "width:640px;height:480px;max-width:100%";
-        var b = document.createElement('div');
+        var b = ce('div');
         b.id = 'game';
         a.appendChild(b);
         document.body.appendChild(a);
-        var script = document.createElement('script');
+        var script = ce('script');
         script.innerHTML = "EJS_player = '#game'; EJS_biosUrl = ''; EJS_gameName = '" + gameName + "'; EJS_gameUrl = '" + fileURL + "'; EJS_core = '" + core + "'; EJS_lightgun = false; EJS_pathtodata = '"+base+"'; EJS_PATHS = " + JSON.stringify(paths) + ";";
+        if (adUrl && adUrl != '') {
+            script.innerHTML += 'EJS_AdUrl = "' + adUrl.replaceAll('"', '\\"') + '";';
+        };
         document.body.appendChild(script);
-        var script = document.createElement('script');
+        var script = ce('script');
         script.src = loader;
         document.body.appendChild(script);
-        
     };
     resetPageContents();
-    var a = document.createElement('div');
+    var a = ce('div');
     a.style = 'padding: 50px;';
-    var header = document.createElement('h1');
+    var header = ce('h1');
     header.style = 'font-size: 45px;';
     header.innerHTML = 'Gamez';
     a.appendChild(header);
-    var b = document.createElement('p');
+    var b = ce('p');
     b.innerHTML = 'Click the choose file button to upload a rom (you can also drag and drop the file)';
     a.appendChild(b);
-    a.appendChild(document.createElement('br'));
-    var file = document.createElement('input');
+    a.appendChild(ce('br'));
+    var file = ce('input');
     async function selectedFile(file) {
+        var adUrl = document.getElementById('adUrl').value;
         while(document.body.firstChild) {
             document.body.removeChild(document.body.firstChild);
         };
@@ -445,108 +464,71 @@
         } else {
             var core = await function() {
                 return new Promise(function(resolve, reject) {
-                    function askForCore() {
-                        var cores = {"NES / Nintendo Entertainment System / Famicon": "nes",
-                                     "SNES / Super Nintendo Entertainment System": "snes",
-                                     "Nintendo 64": "n64",
-                                     "Nintendo Game Boy": "gb",
-                                     "Nintendo Game Boy Advance": "gba",
-                                     "Nintendo DS": "nds",
-                                     "PlayStation": "psx",
-                                     "Virtual Boy": "vb",
-                                     "Sega Mega Drive": "segaMD",
-                                     "Sega Master System": "segaMS",
-                                     "Sega CD": "segaCD",
-                                     "Atari Lynx": "lynx",
-                                     "Sega 32X": "sega32x",
-                                     "Atari Jaguar": "jaguar",
-                                     "Sega Game Gear": "segaGG",
-                                     "Sega Saturn": "segaSaturn",
-                                     "Atari 7800": "atari7800",
-                                     "Atari 2600": "atari2600"};
-                        var a = document.createElement('div');
-                        a.style = 'padding: 50px;';
-                        var p = document.createElement('h2');
-                        p.innerHTML = 'Unable to auto-detect system. Please select the desired system.';
-                        a.appendChild(p);
-                        a.appendChild(document.createElement('br'));
-                        for (var k in cores) {
-                            var input = document.createElement('input');
-                            input.type = 'radio';
-                            input.id = 'game-' + cores[k];
-                            input.name = 'game';
-                            input.value = cores[k];
-                            a.appendChild(input);
-                            var label = document.createElement('label');
-                            label.for = 'game-' + cores[k];
-                            label.innerHTML = k;
-                            a.appendChild(label);
-                            a.appendChild(document.createElement('br'));
-                        };
-                        a.appendChild(document.createElement('br'));
-                        var submit = document.createElement('input');
-                        submit.type = 'submit';
-                        submit.value = 'Load Game';
-                        submit.onclick = function(e) {
-                            var q = false;
-                            var radios = document.getElementsByName('game');
-                            for (var i=0; i<radios.length; i++) {
-                                if (radios[i].checked) {
-                                    var q = radios[i].value;
-                                    break;
-                                };
-                            };
-                            if (! q) {
-                                return;
-                            };
-                            while(document.body.firstChild) {
-                                document.body.removeChild(document.body.firstChild);
-                            };
-                            resolve(q);
-                        };
-                        a.appendChild(submit);
-                        document.body.appendChild(a);
+                    var cores = {"NES / Nintendo Entertainment System / Famicon": "nes",
+                                 "SNES / Super Nintendo Entertainment System": "snes",
+                                 "Nintendo 64": "n64",
+                                 "Nintendo Game Boy": "gb",
+                                 "Nintendo Game Boy Advance": "gba",
+                                 "Nintendo DS": "nds",
+                                 "PlayStation": "psx",
+                                 "Virtual Boy": "vb",
+                                 "Sega Mega Drive": "segaMD",
+                                 "Sega Master System": "segaMS",
+                                 "Sega CD": "segaCD",
+                                 "Atari Lynx": "lynx",
+                                 "Sega 32X": "sega32x",
+                                 "Atari Jaguar": "jaguar",
+                                 "Sega Game Gear": "segaGG",
+                                 "Sega Saturn": "segaSaturn",
+                                 "Atari 7800": "atari7800",
+                                 "Atari 2600": "atari2600"};
+                    var a = ce('div');
+                    a.style = 'padding: 50px;';
+                    var p = ce('h2');
+                    p.innerHTML = 'Unable to auto-detect system. Please select the desired system.';
+                    a.appendChild(p);
+                    a.appendChild(ce('br'));
+                    for (var k in cores) {
+                        var input = ce('input');
+                        input.type = 'radio';
+                        input.id = 'game-' + cores[k];
+                        input.name = 'game';
+                        input.value = cores[k];
+                        a.appendChild(input);
+                        var label = ce('label');
+                        label.for = 'game-' + cores[k];
+                        label.innerHTML = k;
+                        a.appendChild(label);
+                        a.appendChild(ce('br'));
                     };
-                    if ((extension == 'zip' || extension == '7z' || extension == 'rar') && detectCore.checked) {
-                        var reader = new FileReader();
-                        reader.onload = function(e) {
-                            if (extension == '7z') {
-                                var text = e.target.result.split('');
-                                var newText = [];
-                                for (var i=0; i<text.length; i++) {
-                                    if ('abcdefghijklmnopjrstuvwxyz.'.split('').includes(text[i].toLowerCase())) {
-                                        newText.push(text[i]);
-                                    };
-                                };
-                                var text = newText.join('').toLowerCase();
-                            } else {
-                                var text = e.target.result.toLowerCase();
-                            };
-                            if (text.split('.nes').length != 1 || text.split('.fds').length != 1 || text.split('.unif').length != 1 || text.split('.unf').length != 1) {
-                                resolve('nes');
-                            } else if (text.split('.z64').length != 1) {
-                                resolve('n64');
-                            } else if (text.split('.nds').length != 1) {
-                                resolve('nds');
-                            } else if (text.split('.gba').length != 1) {
-                                resolve('gba');
-                            } else if (text.split('.gb').length != 1) {
-                                resolve('gb');
-                            } else if (text.split('.smc').length != 1 || text.split('.fig').length != 1 || text.split('.sfc').length != 1 || text.split('.gd3').length != 1 || text.split('.gd7').length != 1 || text.split('.dx2').length != 1 || text.split('.bsx').length != 1 || text.split('.swc').length != 1) {
-                                resolve('snes');
-                            } else {
-                                askForCore();
+                    a.appendChild(ce('br'));
+                    var submit = ce('input');
+                    submit.type = 'submit';
+                    submit.value = 'Load Game';
+                    submit.onclick = function(e) {
+                        var q = false;
+                        var radios = document.getElementsByName('game');
+                        for (var i=0; i<radios.length; i++) {
+                            if (radios[i].checked) {
+                                var q = radios[i].value;
+                                break;
                             };
                         };
-                        reader.readAsText(file);
-                    } else {
-                        askForCore();
+                        if (! q) {
+                            return;
+                        };
+                        while(document.body.firstChild) {
+                            document.body.removeChild(document.body.firstChild);
+                        };
+                        resolve(q);
                     };
+                    a.appendChild(submit);
+                    document.body.appendChild(a);
                 });
             }();
         };
         var fileURL = URL.createObjectURL(new Blob([file]));
-        loadGame(fileURL, gameName, core);
+        loadGame(fileURL, gameName, core, adUrl);
         if (localStorage.getItem('emubuttonCacheRoms') != 'false' && cacheRom.checked) {
             var reader = new FileReader();
             reader.onload = function(e) {
@@ -561,52 +543,52 @@
     file.onchange = function() {selectedFile(file.files[0])};
     file.type = 'file';
     a.appendChild(file);
-    a.appendChild(document.createElement('br'));
-    a.appendChild(document.createElement('br'));
-    a.appendChild(document.createElement('br'));
-    var detectCore = document.createElement('input');
+    a.appendChild(ce('br'));
+    a.appendChild(ce('br'));
+    a.appendChild(ce('br'));
+    var detectCore = ce('input');
     detectCore.type = 'checkbox';
     detectCore.checked = true;
     detectCore.name = 'detectCore';
     a.appendChild(detectCore);
-    var w = document.createElement('label');
+    var w = ce('label');
     w.for = 'detectCore';
     w.innerHTML = 'Auto-detect core';
     a.appendChild(w);
-    a.appendChild(document.createElement('br'));
-    a.appendChild(document.createElement('br'));
-    var cachedRomsDiv = document.createElement('div');
-    var cacheRom = document.createElement('input');
+    a.appendChild(ce('br'));
+    a.appendChild(ce('br'));
+    var cachedRomsDiv = ce('div');
+    var cacheRom = ce('input');
     cacheRom.type = 'checkbox';
     cacheRom.checked = true;
     cacheRom.name = 'cacheRom';
     cachedRomsDiv.appendChild(cacheRom);
-    var w = document.createElement('label');
+    var w = ce('label');
     w.for = 'cacheRom';
     w.innerHTML = 'Cache this rom';
     cachedRomsDiv.appendChild(w);
-    cachedRomsDiv.appendChild(document.createElement('br'));
-    cachedRomsDiv.appendChild(document.createElement('br'));
-    var p = document.createElement('h2');
+    cachedRomsDiv.appendChild(ce('br'));
+    cachedRomsDiv.appendChild(ce('br'));
+    var p = ce('h2');
     p.innerHTML = 'Cached Roms';
     cachedRomsDiv.appendChild(p);
-    cachedRomsDiv.appendChild(document.createElement('br'));
+    cachedRomsDiv.appendChild(ce('br'));
     var games = await getCachedKeys();
-    var c = document.createElement('div');
+    var c = ce('div');
     function showCachedRoms(games, c) {
         games.sort(gamezSortFunc);
         for (var i=0; i<games.length; i++) {
-            var br = document.createElement('br');
-            var input = document.createElement('input');
+            var br = ce('br');
+            var input = ce('input');
             input.type = 'radio';
             input.id = 'game-' + i;
             input.name = 'game';
             input.value = i;
             c.appendChild(input);
-            var label = document.createElement('label');
+            var label = ce('label');
             label.for = 'game-' + i;
             label.innerHTML = games[i].name + ' - ';
-            var y = document.createElement('a');
+            var y = ce('a');
             y.href = 'javascript:void(0)';
             y.innerHTML = 'delete';
             y.onclick = function(info, div1, div2, div3, div4) {
@@ -619,26 +601,26 @@
                     await deleteRom(info.key);
                     alert('deleted!');
                     if (! c.firstChild) {
-                        var p = document.createElement('p');
+                        var p = ce('p');
                         p.innerHTML = 'There are no cached Roms';
                         c.appendChild(p);
                     };
                 };
             }(games[i], input, label, br, y);
-            var u = document.createElement('a');
+            var u = ce('a');
             u.href = 'javascript:void(0)';
             u.innerHTML = 'download';
             u.onclick = function(game) {
                 return async function() {
                     var blob = await getRomData(game.key);
                     var url = URL.createObjectURL(blob);
-                    var a = document.createElement('a');
+                    var a = ce('a');
                     a.href = url;
                     a.download = game.fileName;
                     a.click();
                 };
             }(games[i]);
-            var p = document.createElement('f');
+            var p = ce('f');
             p.innerHTML = ' - ';
             label.appendChild(y);
             label.appendChild(p);
@@ -647,7 +629,7 @@
             c.appendChild(br);
         };
         if (games.length == 0) {
-            var p = document.createElement('p');
+            var p = ce('p');
             p.innerHTML = 'There are no cached Roms';
             c.appendChild(p);
         };
@@ -656,10 +638,10 @@
     var c = showCachedRoms(games, c);
     c.id = 'cachedRoms';
     cachedRomsDiv.appendChild(c);
-    cachedRomsDiv.appendChild(document.createElement('br'));
-    cachedRomsDiv.appendChild(document.createElement('br'));
-    cachedRomsDiv.appendChild(document.createElement('br'));
-    var submit = document.createElement('input');
+    cachedRomsDiv.appendChild(ce('br'));
+    cachedRomsDiv.appendChild(ce('br'));
+    cachedRomsDiv.appendChild(ce('br'));
+    var submit = ce('input');
     submit.type = 'submit';
     submit.value = 'Load Game';
     submit.onclick = async function(e) {
@@ -676,17 +658,17 @@
         if (! q) {return};
         removeDropListen();
         var game = q;
-        
+        var adUrl = document.getElementById('adUrl').value;
         while(document.body.firstChild) {
             document.body.removeChild(document.body.firstChild);
         };
         var blob = await getRomData(game.key);
-        loadGame(URL.createObjectURL(blob), game.name.replaceAll("'", "\\'"), game.core);
+        loadGame(URL.createObjectURL(blob), game.name.replaceAll("'", "\\'"), game.core, adUrl);
     };
     cachedRomsDiv.appendChild(submit);
-    cachedRomsDiv.appendChild(document.createElement('br'));
-    cachedRomsDiv.appendChild(document.createElement('br'));
-    var clear = document.createElement('button');
+    cachedRomsDiv.appendChild(ce('br'));
+    cachedRomsDiv.appendChild(ce('br'));
+    var clear = ce('button');
     clear.onclick = function() {
         if (! confirm('Are you sure you want to clear the rom cache')) {
             return;
@@ -695,7 +677,7 @@
         while(document.getElementById('cachedRoms').firstChild) {
             document.getElementById('cachedRoms').removeChild(document.getElementById('cachedRoms').firstChild);
         };
-        var p = document.createElement('p');
+        var p = ce('p');
         p.innerHTML = 'There are no cached Roms';
         c.appendChild(p);
         alert('cleared!');
@@ -705,19 +687,19 @@
     if (localStorage.getItem('emubuttonCacheRoms') == 'false') {
         cachedRomsDiv.style = 'display:none;';
     };
-    cachedRomsDiv.appendChild(document.createElement('br'));
-    cachedRomsDiv.appendChild(document.createElement('br'));
-    var q = document.createElement('a');
+    cachedRomsDiv.appendChild(ce('br'));
+    cachedRomsDiv.appendChild(ce('br'));
+    var q = ce('a');
     q.innerHTML = 'Restore saved export (requires internet)';
     q.href = 'javascript:void(0)';
     q.onclick = function(q) {
         return function() {
-            var p = document.createElement('p');
+            var p = ce('p');
             p.innerHTML = 'starting...';
             q.appendChild(p);
-            var script = document.createElement('script');
+            var script = ce('script');
             script.onload = function() {
-                var a = document.createElement('input');
+                var a = ce('input');
                 a.type = 'file';
                 a.onchange = async function(e) {
                     var zip = new JSZip();
@@ -745,18 +727,18 @@
         };
     }(cachedRomsDiv);
     cachedRomsDiv.appendChild(q);
-    cachedRomsDiv.appendChild(document.createElement('br'));
-    cachedRomsDiv.appendChild(document.createElement('br'));
-    var q = document.createElement('a');
+    cachedRomsDiv.appendChild(ce('br'));
+    cachedRomsDiv.appendChild(ce('br'));
+    var q = ce('a');
     q.innerHTML = 'Save imported roms (requires internet)';
     q.href = 'javascript:void(0)';
     q.onclick = function(q, y) {
         return function() {
             q.remove();
-            var p = document.createElement('p');
+            var p = ce('p');
             p.innerHTML = 'Starting...';
             y.appendChild(p);
-            var script = document.createElement('script');
+            var script = ce('script');
             script.onload = async function() {
                 var zip = new JSZip();
                 var keys = await getCachedKeys();
@@ -768,7 +750,7 @@
                     var zipStatus = 'Zipping: '+metadata.percent.toFixed(2)+'%';
                     p.innerHTML = zipStatus;
                 });
-                var a = document.createElement('a');
+                var a = ce('a');
                 a.href = URL.createObjectURL(blob);
                 a.download = 'emulator-button.export';
                 a.click();
@@ -779,7 +761,7 @@
     }(q, cachedRomsDiv);
     cachedRomsDiv.appendChild(q);
     a.appendChild(cachedRomsDiv);
-    var toggleCacheSetting = document.createElement('button');
+    var toggleCacheSetting = ce('button');
     if (localStorage.getItem('emubuttonCacheRoms') != 'false') {
         toggleCacheSetting.innerHTML = 'Currently Caching Roms. Click to change';
     } else {
@@ -796,21 +778,46 @@
             cachedRomsDiv.style = 'display:block;';
         };
     };
-    a.appendChild(document.createElement('br'));
+    a.appendChild(ce('br'));
     a.appendChild(toggleCacheSetting);
-    a.appendChild(document.createElement('br'));
-    a.appendChild(document.createElement('br'));
-    var p = document.createElement('p');
-    p.innerHTML = 'Game-Button: Version 4.7';
+    var dev = ce('div');
+    dev.appendChild(ce('br'));
+    dev.appendChild(ce('br'));
+    var h = ce('h1');
+    h.innerHTML = 'Dev Options';
+    dev.appendChild(h);
+    var p = ce('p');
+    p.innerHTML = 'ad (iframe) url: ';
+    dev.appendChild(p);
+    var text = ce('input');
+    text.id = 'adUrl';
+    text.type = 'text';
+    p.appendChild(text);
+    dev.appendChild(ce('br'));
+    var button = ce('button');
+    button.onclick = function() {
+        document.getElementById('dev').style = 'display:none;';
+        localStorage.removeItem('emuButtonDev');
+    };
+    button.innerHTML = 'turn off dev mode';
+    dev.appendChild(button);
+    dev.style = 'display:'+(localStorage.getItem('emuButtonDev') ? 'block;':'none;');
+    dev.id = 'dev';
+    a.appendChild(dev);
+    a.appendChild(ce('br'));
+    a.appendChild(ce('br'));
+    var p = ce('p');
+    p.innerHTML = 'Game-Button: Version 4.8';
     a.appendChild(p);
-    var b = document.createElement('p');
-    b.innerHTML = 'Button Last Updated: November 26, 2021';
+    var b = ce('p');
+    b.innerHTML = 'Button Last Updated: December 6, 2021';
     a.appendChild(b);
-    var p = document.createElement('p');
+    var p = ce('p');
     p.innerHTML = 'Offline Mode: CHECKING';
     p.id = 'offlineStatus';
     a.appendChild(p);
     document.body.appendChild(a);
+    document.addEventListener('keydown', keyDDown, false);
     setTimeout(function() {
         cacheCommonModules();
     }, 2000);
