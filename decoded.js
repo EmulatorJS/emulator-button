@@ -3,21 +3,17 @@
     (async function() {
         try {
             var version = {
-                current_version: 4.8,
-                jsFilesVersion: false
+                current_version: 5.0
             };
-            window.versionJSON = version;
             var version = await fetch('https://raw.githack.com/ethanaobrien/emulator-button/main/version.json');
             var version = await version.text();
             var version = JSON.parse(version);
         } catch(e) {
             var version = {
-                current_version: 4.8,
-                jsFilesVersion: false
+                current_version: 5.0
             };
         };
-        window.versionJSON = version;
-        var usingVersion = 4.8;
+        var usingVersion = 5.0;
         if (usingVersion < version.current_version) {
             alert('You have version ' + usingVersion + ' but the newest version is ' + version.current_version + '. ' + version.changes);
             if (confirm('Do you want to update? (Github Pages will open)')) {
@@ -96,7 +92,7 @@
     document.addEventListener("dragleave", drag, false);
     document.addEventListener("dragenter", drag, false);
     document.addEventListener("drop", drop, false);
-    function getCachedFileUrl(key, path, mime, forceUpdate) {
+    function getCachedFileUrl(key, path, mime) {
         return new Promise(function(resolve, reject) {
             var openRequest = indexedDB.open("mainEmuFiles", 1);
             openRequest.onerror = function() {};
@@ -107,23 +103,23 @@
                 var request = objectStore.get(key);
                 request.onsuccess = async function(e) {
                     var file = e.target.result;
-                    if (! file || forceUpdate) {
-                        try {
-                            var asd = await fetch(path);
-                        } catch(e) {
+                    try {
+                        var asd = await fetch(path);
+                    } catch(e) {
+                        if (file) {
+                            resolve(URL.createObjectURL(new Blob([file], {type: mime})));
+                        } else {
                             reject(e);
-                            return;
                         };
-                        var buffer = await asd.arrayBuffer();
-                        var transaction = db.transaction(["mainEmuFiles"], "readwrite");
-                        var objectStore = transaction.objectStore("mainEmuFiles");
-                        var request = objectStore.put(buffer, key);
-                        request.onsuccess = function() {};
-                        request.onerror = function() {};
-                        resolve(URL.createObjectURL(new Blob([buffer], {type: mime})));
                         return;
                     };
-                    resolve(URL.createObjectURL(new Blob([file], {type: mime})));
+                    var buffer = await asd.arrayBuffer();
+                    var transaction = db.transaction(["mainEmuFiles"], "readwrite");
+                    var objectStore = transaction.objectStore("mainEmuFiles");
+                    var request = objectStore.put(buffer, key);
+                    request.onsuccess = function() {};
+                    request.onerror = function() {};
+                    resolve(URL.createObjectURL(new Blob([buffer], {type: mime})));
                 };
                 request.onerror = function() {};
             };
@@ -187,33 +183,17 @@
     };
     async function cacheCommonModules() {
         var js = 'text/javascript';
-        var cachedFilesVersion = localStorage.getItem('commonModulesCacheVersion');
-        if (typeof cachedFilesVersion != 'number') {
-            localStorage.removeItem('commonModulesCacheVersion');
-        };
-        var status = document.getElementById('offlineStatus');
-        if (! cachedFilesVersion) {
-            var forceUpdate = true;
-            status.innerHTML = 'Offline Mode: DOWNLOADING FILES';
-            localStorage.setItem('commonModulesCacheVersion', window.versionJSON.jsFilesVersion);
-        } else if (window.versionJSON && window.versionJSON.jsFilesVersion && cachedFilesVersion < window.versionJSON.jsFilesVersion) {
-            var forceUpdate = true;
-            status.innerHTML = 'Offline Mode: UPDATING FILES';
-            localStorage.setItem('commonModulesCacheVersion', window.versionJSON.jsFilesVersion);
-        } else {
-            var forceUpdate = false;
-            status.innerHTML = 'Offline Mode: READY';
-        };
         var baseUrl = 'https://rawcdn.githack.com/ethanaobrien/emulatorjs/main/data/';
+        var status = document.getElementById('offlineStatus');
         try {
-            getCachedFileUrl('loader', 'https://raw.githack.com/ethanaobrien/emulator-button/main/data/loader.js', js, forceUpdate);
-            getCachedFileUrl('webrtc', baseUrl + 'webrtc-adapter.js', js, forceUpdate);
-            getCachedFileUrl('rar', baseUrl + 'libunrar.js', js, forceUpdate);
-            getCachedFileUrl('zip', baseUrl + 'extractzip.js', js, forceUpdate);
-            getCachedFileUrl('7zip', baseUrl + 'extract7z.js', js, forceUpdate);
-            getCachedFileUrl('emulator', 'https://raw.githack.com/ethanaobrien/emulator-button/main/data/emulator.js', js, forceUpdate);
-            getCachedFileUrl('rarMem', baseUrl+'libunrar.js.mem', js, forceUpdate);
-            var v = await getCachedFileUrl('v', baseUrl + 'v.json', 'application/json', forceUpdate);
+            getCachedFileUrl('loader', baseUrl + 'loader.js', js);
+            getCachedFileUrl('webrtc', baseUrl + 'webrtc-adapter.js', js);
+            getCachedFileUrl('rar', baseUrl + 'libunrar.js', js);
+            getCachedFileUrl('zip', baseUrl + 'extractzip.js', js);
+            getCachedFileUrl('7zip', baseUrl + 'extract7z.js', js);
+            getCachedFileUrl('emulator', baseUrl + 'emulator.js', js);
+            getCachedFileUrl('rarMem', baseUrl+'libunrar.js.mem', js);
+            var v = await getCachedFileUrl('v', baseUrl + 'v.json', 'application/json');
             var v = await fetch(v);
             var v = await v.text();
             var v = JSON.parse(v);
@@ -395,23 +375,28 @@
     async function loadGame(fileURL, gameName, core, adUrl) {
         document.removeEventListener('keydown', keyDDown, false);
         var js = 'text/javascript';
-        var base = 'https://raw.githack.com/ethanaobrien/emulatorjs/main/data/';
-        var loader = await getCachedFileUrl('loader', 'https://raw.githack.com/ethanaobrien/emulator-button/main/data/loader.js', js);
+        var color = function() {
+            var colors = ['#FF0000', '#FFA500', '#008000', '#0000FF', '#800080'];
+            var random = Math.floor(Math.random() * colors.length);
+            return colors[random];
+        }();
+        var base = 'https://rawcdn.githack.com/ethanaobrien/emulatorjs/main/data/';
+        var loader = await getCachedFileUrl('loader', base+'loader.js', js);
         var webrtc = await getCachedFileUrl('webrtc', base+'webrtc-adapter.js', js);
         var rar = await getCachedFileUrl('rar', base+'libunrar.js', js);
         var rarMem = await getCachedFileUrl('rarMem', base+'libunrar.js.mem', 'application/json');
         var zip = await getCachedFileUrl('zip', base+'extractzip.js', js);
         var sevenzip = await getCachedFileUrl('7zip', base+'extract7z.js', js);
-        var emulator = await getCachedFileUrl('emulator', 'https://raw.githack.com/ethanaobrien/emulator-button/main/data/emulator.js', js);
+        var emulator = await getCachedFileUrl('emulator', base+'emulator.js', js);
         var v = await getCachedFileUrl('v', base+'v.json', 'application/json');
         var paths = {
-            "v": v,
-            "emulator": emulator,
-            "7z": sevenzip,
-            "zip": zip,
-            "rar": rar,
-            "webrtc": webrtc,
-            "rarMem": rarMem
+            "v.json": v,
+            "emulator.js": emulator,
+            "extract7z.js": sevenzip,
+            "extractzip.js": zip,
+            "libunrar.js": rar,
+            "webrtc-adapter.js": webrtc,
+            "libunrar.js.mem": rarMem
         };
         var a = ce('div');
         a.style = "width:640px;height:480px;max-width:100%";
@@ -419,12 +404,18 @@
         b.id = 'game';
         a.appendChild(b);
         document.body.appendChild(a);
-        var script = ce('script');
-        script.innerHTML = "EJS_player = '#game'; EJS_biosUrl = ''; EJS_gameName = '" + gameName + "'; EJS_gameUrl = '" + fileURL + "'; EJS_core = '" + core + "'; EJS_lightgun = false; EJS_pathtodata = '"+base+"'; EJS_PATHS = " + JSON.stringify(paths) + ";";
+        EJS_color = color;
+        EJS_paths = paths;
+        EJS_player = '#game';
+        EJS_biosUrl = '';
+        EJS_gameName = gameName;
+        EJS_gameUrl = fileURL;
+        EJS_core = core;
+        EJS_lightgun = false;
+        EJS_pathtodata = base;
         if (adUrl && adUrl != '') {
-            script.innerHTML += 'EJS_AdUrl = "' + adUrl.replaceAll('"', '\\"') + '";';
+            EJS_AdUrl = adUrl;
         };
-        document.body.appendChild(script);
         var script = ce('script');
         script.src = loader;
         document.body.appendChild(script);
@@ -807,10 +798,10 @@
     a.appendChild(ce('br'));
     a.appendChild(ce('br'));
     var p = ce('p');
-    p.innerHTML = 'Game-Button: Version 4.8';
+    p.innerHTML = 'Game-Button: Version 5.0';
     a.appendChild(p);
     var b = ce('p');
-    b.innerHTML = 'Button Last Updated: December 6, 2021';
+    b.innerHTML = 'Button Last Updated: January 5, 2022';
     a.appendChild(b);
     var p = ce('p');
     p.innerHTML = 'Offline Mode: CHECKING';
