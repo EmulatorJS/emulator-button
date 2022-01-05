@@ -1,26 +1,30 @@
 (async function() {
     var ce = function(e) {return document.createElement(e);};
-    (async function() {
+    async function checkForUpdate() {
         try {
             var version = {
-                current_version: 5.0
+                current_version: 5.1
             };
             var version = await fetch('https://raw.githack.com/ethanaobrien/emulator-button/main/version.json');
             var version = await version.text();
             var version = JSON.parse(version);
         } catch(e) {
             var version = {
-                current_version: 5.0
+                current_version: 5.1
             };
         };
-        var usingVersion = 5.0;
+        var usingVersion = 5.1;
         if (usingVersion < version.current_version) {
-            alert('You have version ' + usingVersion + ' but the newest version is ' + version.current_version + '. ' + version.changes);
-            if (confirm('Do you want to update? (Github Pages will open)')) {
-                window.open('https://raw.githack.com/ethanaobrien/emulator-button/main/index.html');
+            var a = document.createElement('div');
+            var html = '<h2>Version ' + version.current_version + ' is out! <a href="https://raw.githack.com/ethanaobrien/emulator-button/main/index.html" target="_blank">Click Here</a> to update.</h2><p>Changes:</p><ul>';
+            for (var i=0; i<version.changes.length; i++) {
+                html += '<li>' + version.changes[i] + '</li>';
             };
+            html += '</ul><br>';
+            a.innerHTML = html;
+            document.getElementById('emulatorjsElemAfterTitle').parentNode.insertBefore(a, document.getElementById('emulatorjsElemAfterTitle'));
         };
-    })();
+    };
     if (window.VARRRSSZZ) {
         var a = [];
         var b = [];
@@ -56,7 +60,7 @@
         } else {
             pressText += key
         };
-        if (pressText == 'dev mode') {
+        if (pressText.split('dev mode').length != 1) {
             pressText = '';
             document.getElementById('dev').style = 'display:block;';
             localStorage.setItem('emuButtonDev', true);
@@ -428,6 +432,7 @@
     header.innerHTML = 'Gamez';
     a.appendChild(header);
     var b = ce('p');
+    b.id = 'emulatorjsElemAfterTitle';
     b.innerHTML = 'Click the choose file button to upload a rom (you can also drag and drop the file)';
     a.appendChild(b);
     a.appendChild(ce('br'));
@@ -798,7 +803,7 @@
     a.appendChild(ce('br'));
     a.appendChild(ce('br'));
     var p = ce('p');
-    p.innerHTML = 'Game-Button: Version 5.0';
+    p.innerHTML = 'Game-Button: Version 5.1';
     a.appendChild(p);
     var b = ce('p');
     b.innerHTML = 'Button Last Updated: January 5, 2022';
@@ -809,6 +814,7 @@
     a.appendChild(p);
     document.body.appendChild(a);
     document.addEventListener('keydown', keyDDown, false);
+    checkForUpdate();
     setTimeout(function() {
         cacheCommonModules();
     }, 2000);
