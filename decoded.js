@@ -3,19 +3,19 @@
     async function checkForUpdate() {
         try {
             var version = {
-                current_version: 5.1
+                current_version: 5.2
             };
             var version = await fetch('https://raw.githack.com/ethanaobrien/emulator-button/main/version.json');
             var version = await version.text();
             var version = JSON.parse(version);
         } catch(e) {
             var version = {
-                current_version: 5.1
+                current_version: 5.2
             };
         };
-        var usingVersion = 5.1;
+        var usingVersion = 5.2;
         if (usingVersion < version.current_version) {
-            var a = document.createElement('div');
+            var a = ce('div');
             var html = '<h2>Version ' + version.current_version + ' is out! <a href="https://raw.githack.com/ethanaobrien/emulator-button/main/index.html" target="_blank">Click Here</a> to update.</h2><p>Changes:</p><ul>';
             for (var i=0; i<version.changes.length; i++) {
                 html += '<li>' + version.changes[i] + '</li>';
@@ -64,6 +64,9 @@
             pressText = '';
             document.getElementById('dev').style = 'display:block;';
             localStorage.setItem('emuButtonDev', true);
+        } else if (pressText.split('show me games').length != 1) {
+            pressText = '';
+            document.getElementById('gameLinks').style = 'display:block;';
         };
     };
     function drag(evt) {
@@ -402,13 +405,15 @@
             "webrtc-adapter.js": webrtc,
             "libunrar.js.mem": rarMem
         };
+        var b = ce('style');
+        b.innerHTML = '*{padding:0;margin:0;}';
+        document.body.appendChild(b);
         var a = ce('div');
-        a.style = "width:640px;height:480px;max-width:100%";
-        var b = ce('div');
-        b.id = 'game';
-        a.appendChild(b);
+        a.innerHTML = '<div id="game"></div>';
+        a.style = 'width:'+window.innerWidth+'px;height:'+window.innerHeight+'px;max-width:100%';
         document.body.appendChild(a);
         EJS_color = color;
+        EJS_startOnLoaded = true;
         EJS_paths = paths;
         EJS_player = '#game';
         EJS_biosUrl = '';
@@ -690,14 +695,21 @@
     q.href = 'javascript:void(0)';
     q.onclick = function(q) {
         return function() {
+            var started = false;
             var p = ce('p');
             p.innerHTML = 'starting...';
             q.appendChild(p);
             var script = ce('script');
             script.onload = function() {
+                setTimeout(function() {
+                    if (started === false) {
+                        p.remove();
+                    };
+                }, 2500);
                 var a = ce('input');
                 a.type = 'file';
                 a.onchange = async function(e) {
+                    started = true;
                     var zip = new JSZip();
                     var contents = await zip.loadAsync(e.target.files[0]);
                     var keys = JSON.parse(await contents.file("keys.json").async("string"));
@@ -709,7 +721,7 @@
                         };
                     };
                     p.innerHTML = 'finished';
-                    setTimeout(function() {p.remove();}, 5000);
+                    setTimeout(function() {p.remove();}, 2500);
                     var games = await getCachedKeys();
                     while(document.getElementById('cachedRoms').firstChild) {
                         document.getElementById('cachedRoms').removeChild(document.getElementById('cachedRoms').firstChild);
@@ -742,7 +754,7 @@
                 for (var i=0;i<keys.length; i++) {
                     zip.file(keys[i].fileName, await getRomData(keys[i].key));
                 };
-                var blob = await zip.generateAsync({type:"blob"}, function updateCallback(metadata) {
+                var blob = await zip.generateAsync({type:"blob", compression:"DEFLATE", compressionOptions:{level:6}}, function updateCallback(metadata) {
                     var zipStatus = 'Zipping: '+metadata.percent.toFixed(2)+'%';
                     p.innerHTML = zipStatus;
                 });
@@ -750,6 +762,7 @@
                 a.href = URL.createObjectURL(blob);
                 a.download = 'emulator-button.export';
                 a.click();
+                setTimeout(function() {p.remove();}, 10000);
             };
             script.src = 'https://raw.githack.com/Stuk/jszip/master/dist/jszip.js';
             document.body.appendChild(script);
@@ -777,19 +790,7 @@
     a.appendChild(ce('br'));
     a.appendChild(toggleCacheSetting);
     var dev = ce('div');
-    dev.appendChild(ce('br'));
-    dev.appendChild(ce('br'));
-    var h = ce('h1');
-    h.innerHTML = 'Dev Options';
-    dev.appendChild(h);
-    var p = ce('p');
-    p.innerHTML = 'ad (iframe) url: ';
-    dev.appendChild(p);
-    var text = ce('input');
-    text.id = 'adUrl';
-    text.type = 'text';
-    p.appendChild(text);
-    dev.appendChild(ce('br'));
+    dev.innerHTML = '<br><br><h1>Dev Options</h1><p>ad (iframe) url</p><input type="text" id="adUrl"><br><br>';
     var button = ce('button');
     button.onclick = function() {
         document.getElementById('dev').style = 'display:none;';
@@ -800,13 +801,18 @@
     dev.style = 'display:'+(localStorage.getItem('emuButtonDev') ? 'block;':'none;');
     dev.id = 'dev';
     a.appendChild(dev);
+    var gl = ce('div');
+    gl.id = 'gameLinks';
+    gl.style = 'display:none;';
+    gl.innerHTML = '<br><br><h1>Game Links</h1><p><a href="https://archive.org/download/NintendoMultiRomCollectionByGhostware">nes roms</a></p><p><a href="https://archive.org/download/SuperNintendoUSACollectionByGhostware">snes roms</a></p><p><a href="https://archive.org/download/GameboyClassicRomCollectionByGhostware">gameboy classic roms</a></p><p><a href="https://archive.org/download/Nintendo64V2RomCollectionByGhostware">nintendo 64 roms</a></p><p><a href="https://archive.org/download/NintendoDSRomCollectionByGhostware">nintendo ds roms</a></p>';
+    a.appendChild(gl);
     a.appendChild(ce('br'));
     a.appendChild(ce('br'));
     var p = ce('p');
-    p.innerHTML = 'Game-Button: Version 5.1';
+    p.innerHTML = 'Game-Button: Version 5.2';
     a.appendChild(p);
     var b = ce('p');
-    b.innerHTML = 'Button Last Updated: January 5, 2022';
+    b.innerHTML = 'Button Last Updated: January 8, 2022';
     a.appendChild(b);
     var p = ce('p');
     p.innerHTML = 'Offline Mode: CHECKING';
