@@ -3,17 +3,17 @@
     async function checkForUpdate() {
         try {
             var version = {
-                current_version: 5.2
+                current_version: 5.3
             };
             var version = await fetch('https://raw.githack.com/ethanaobrien/emulator-button/main/version.json');
             var version = await version.text();
             var version = JSON.parse(version);
         } catch(e) {
             var version = {
-                current_version: 5.2
+                current_version: 5.3
             };
         };
-        var usingVersion = 5.2;
+        var usingVersion = 5.3;
         if (usingVersion < version.current_version) {
             var a = ce('div');
             var html = '<h2>Version ' + version.current_version + ' is out! <a href="https://raw.githack.com/ethanaobrien/emulator-button/main/index.html" target="_blank">Click Here</a> to update.</h2><p>Changes:</p><ul>';
@@ -25,23 +25,31 @@
             document.getElementById('emulatorjsElemAfterTitle').parentNode.insertBefore(a, document.getElementById('emulatorjsElemAfterTitle'));
         };
     };
-    if (window.VARRRSSZZ) {
-        var a = [];
-        var b = [];
-        for (var k in window) {
-            a.push(k);
-        };
-        for (var i=0; i<a.length; i++) {
-            if (! window.VARRRSSZZ.includes(a[i])) {
-                b.push(a[i]);
+    try {
+        if (window.VARRRSSZZ) {
+            var a = [];
+            var b = [];
+            for (var k in window) {
+                a.push(k);
+            };
+            for (var i=0; i<a.length; i++) {
+                if (! window.VARRRSSZZ.includes(a[i])) {
+                    b.push(a[i]);
+                };
+            };
+            for (var i=0; i<b.length; i++) {
+                if (window[b[i]]) {
+                    delete window[b[i]];
+                };
             };
         };
-        for (var i=0; i<b.length; i++) {
-            if (window[b[i]]) {
-                delete window[b[i]];
+        if (window.EJS_emulator && window.EJS_emulator.eventListeners) {
+            for (var i=0; i<EJS_emulator.eventListeners.length; i++) {
+                var a = EJS_emulator.eventListeners[i];
+                a.element.removeEventListener(a.type, a.callback, a.capture);
             };
         };
-    };
+    } catch(e) {};
     var a = [];
     for (var k in window) {
         a.push(k);
@@ -99,7 +107,7 @@
     document.addEventListener("dragleave", drag, false);
     document.addEventListener("dragenter", drag, false);
     document.addEventListener("drop", drop, false);
-    function getCachedFileUrl(key, path, mime) {
+    function getCachedFileUrl(key, path, mime, update) {
         return new Promise(function(resolve, reject) {
             var openRequest = indexedDB.open("mainEmuFiles", 1);
             openRequest.onerror = function() {};
@@ -111,7 +119,11 @@
                 request.onsuccess = async function(e) {
                     var file = e.target.result;
                     try {
-                        var asd = await fetch(path);
+                        if (update) {
+                            var asd = await fetch(path, {cache: 'no-cache'});
+                        } else {
+                            var asd = await fetch(path);
+                        };
                     } catch(e) {
                         if (file) {
                             resolve(URL.createObjectURL(new Blob([file], {type: mime})));
@@ -193,14 +205,15 @@
         var baseUrl = 'https://rawcdn.githack.com/ethanaobrien/emulatorjs/main/data/';
         var status = document.getElementById('offlineStatus');
         try {
-            getCachedFileUrl('loader', baseUrl + 'loader.js', js);
-            getCachedFileUrl('webrtc', baseUrl + 'webrtc-adapter.js', js);
-            getCachedFileUrl('rar', baseUrl + 'libunrar.js', js);
-            getCachedFileUrl('zip', baseUrl + 'extractzip.js', js);
-            getCachedFileUrl('7zip', baseUrl + 'extract7z.js', js);
-            getCachedFileUrl('emulator', baseUrl + 'emulator.js', js);
-            getCachedFileUrl('rarMem', baseUrl+'libunrar.js.mem', js);
-            var v = await getCachedFileUrl('v', baseUrl + 'v.json', 'application/json');
+            getCachedFileUrl('loader', baseUrl + 'loader.js', js, true);
+            getCachedFileUrl('webrtc', baseUrl + 'webrtc-adapter.js', js, true);
+            getCachedFileUrl('rar', baseUrl + 'libunrar.js', js, true);
+            getCachedFileUrl('zip', baseUrl + 'extractzip.js', js, true);
+            getCachedFileUrl('7zip', baseUrl + 'extract7z.js', js, true);
+            getCachedFileUrl('emulator', baseUrl + 'emulator.js', js, true);
+            getCachedFileUrl('emuMain', baseUrl + 'emu-main.js', js, true);
+            getCachedFileUrl('rarMem', baseUrl+'libunrar.js.mem', js, true);
+            var v = await getCachedFileUrl('v', baseUrl + 'v.json', 'application/json', true);
             var v = await fetch(v);
             var v = await v.text();
             var v = JSON.parse(v);
@@ -395,10 +408,12 @@
         var zip = await getCachedFileUrl('zip', base+'extractzip.js', js);
         var sevenzip = await getCachedFileUrl('7zip', base+'extract7z.js', js);
         var emulator = await getCachedFileUrl('emulator', base+'emulator.js', js);
+        var emuMain = await getCachedFileUrl('emuMain', base + 'emu-main.js', js);
         var v = await getCachedFileUrl('v', base+'v.json', 'application/json');
         var paths = {
             "v.json": v,
             "emulator.js": emulator,
+            "emu-main.js": emuMain,
             "extract7z.js": sevenzip,
             "extractzip.js": zip,
             "libunrar.js": rar,
@@ -411,6 +426,9 @@
         var a = ce('div');
         a.innerHTML = '<div id="game"></div>';
         a.style = 'width:'+window.innerWidth+'px;height:'+window.innerHeight+'px;max-width:100%';
+        window.onresize = function() {
+            a.style = 'width:'+window.innerWidth+'px;height:'+window.innerHeight+'px;max-width:100%';
+        };
         document.body.appendChild(a);
         EJS_color = color;
         EJS_startOnLoaded = true;
@@ -809,10 +827,10 @@
     a.appendChild(ce('br'));
     a.appendChild(ce('br'));
     var p = ce('p');
-    p.innerHTML = 'Game-Button: Version 5.2';
+    p.innerHTML = 'Game-Button: Version 5.3';
     a.appendChild(p);
     var b = ce('p');
-    b.innerHTML = 'Button Last Updated: January 8, 2022';
+    b.innerHTML = 'Button Last Updated: January 12, 2022';
     a.appendChild(b);
     var p = ce('p');
     p.innerHTML = 'Offline Mode: CHECKING';

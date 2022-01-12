@@ -1,1 +1,1 @@
-{"current_version": 5.2, "changes": ["Fullscreen", "start game on load", "new easter egg", "Better compression on emulator export"]}
+{"current_version": 5.3, "changes": ["Fullscreen bug fix", "resolve page slowdown", "update offline for new emulator file"]}
