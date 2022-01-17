@@ -3,17 +3,17 @@
     async function checkForUpdate() {
         try {
             var version = {
-                current_version: 5.3
+                current_version: 5.4
             };
             var version = await fetch('https://raw.githack.com/ethanaobrien/emulator-button/main/version.json');
             var version = await version.text();
             var version = JSON.parse(version);
         } catch(e) {
             var version = {
-                current_version: 5.3
+                current_version: 5.4
             };
         };
-        var usingVersion = 5.3;
+        var usingVersion = 5.4;
         if (usingVersion < version.current_version) {
             var a = ce('div');
             var html = '<h2>Version ' + version.current_version + ' is out! <a href="https://raw.githack.com/ethanaobrien/emulator-button/main/index.html" target="_blank">Click Here</a> to update.</h2><p>Changes:</p><ul>';
@@ -392,7 +392,7 @@
             };
         };
     };
-    async function loadGame(fileURL, gameName, core, adUrl) {
+    async function loadGame(fileURL, gameName, core, adUrl, gameID, netplayUrl) {
         document.removeEventListener('keydown', keyDDown, false);
         var js = 'text/javascript';
         var color = function() {
@@ -443,6 +443,12 @@
         if (adUrl && adUrl != '') {
             EJS_AdUrl = adUrl;
         };
+        if (gameID && gameID != '') {
+            EJS_gameID = gameID;
+        };
+        if (netplayUrl && netplayUrl != '') {
+            EJS_netplayUrl = netplayUrl;
+        };
         var script = ce('script');
         script.src = loader;
         document.body.appendChild(script);
@@ -462,6 +468,8 @@
     var file = ce('input');
     async function selectedFile(file) {
         var adUrl = document.getElementById('adUrl').value;
+        var gameID = document.getElementById('gameID').value;
+        var netplayUrl = document.getElementById('netplayUrl').value;
         while(document.body.firstChild) {
             document.body.removeChild(document.body.firstChild);
         };
@@ -547,7 +555,7 @@
             }();
         };
         var fileURL = URL.createObjectURL(new Blob([file]));
-        loadGame(fileURL, gameName, core, adUrl);
+        loadGame(fileURL, gameName, core, adUrl, gameID, netplayUrl);
         if (localStorage.getItem('emubuttonCacheRoms') != 'false' && cacheRom.checked) {
             var reader = new FileReader();
             reader.onload = function(e) {
@@ -678,11 +686,13 @@
         removeDropListen();
         var game = q;
         var adUrl = document.getElementById('adUrl').value;
+        var gameID = document.getElementById('gameID').value;
+        var netplayUrl = document.getElementById('netplayUrl').value;
         while(document.body.firstChild) {
             document.body.removeChild(document.body.firstChild);
         };
         var blob = await getRomData(game.key);
-        loadGame(URL.createObjectURL(blob), game.name.replaceAll("'", "\\'"), game.core, adUrl);
+        loadGame(URL.createObjectURL(blob), game.name.replaceAll("'", "\\'"), game.core, adUrl, gameID, netplayUrl);
     };
     cachedRomsDiv.appendChild(submit);
     cachedRomsDiv.appendChild(ce('br'));
@@ -808,7 +818,7 @@
     a.appendChild(ce('br'));
     a.appendChild(toggleCacheSetting);
     var dev = ce('div');
-    dev.innerHTML = '<br><br><h1>Dev Options</h1><p>ad (iframe) url</p><input type="text" id="adUrl"><br><br>';
+    dev.innerHTML = '<br><br><h1>Dev Options</h1>ad (iframe) url: <input type="text" id="adUrl"><br><br><br>netplay game id: <input type="number" id="gameID"><br><br>netplay server url: <input type="text" id="netplayUrl"><br><br><br>';
     var button = ce('button');
     button.onclick = function() {
         document.getElementById('dev').style = 'display:none;';
@@ -827,10 +837,10 @@
     a.appendChild(ce('br'));
     a.appendChild(ce('br'));
     var p = ce('p');
-    p.innerHTML = 'Game-Button: Version 5.3';
+    p.innerHTML = 'Game-Button: Version 5.4';
     a.appendChild(p);
     var b = ce('p');
-    b.innerHTML = 'Button Last Updated: January 12, 2022';
+    b.innerHTML = 'Button Last Updated: January 17, 2022';
     a.appendChild(b);
     var p = ce('p');
     p.innerHTML = 'Offline Mode: CHECKING';
