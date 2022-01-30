@@ -1,19 +1,23 @@
 (async function() {
     var ce = function(e) {return document.createElement(e);};
+    var br = function(e) {e.appendChild(ce('br'))};
+    var cp = function(e, t, id) {
+        var p = ce('p');
+        p.innerHTML = t||'';
+        if (id) {p.id=id;};
+        e.appendChild(p);
+        return p;
+    };
+    var emuVersion = 5.5;
     async function checkForUpdate() {
         try {
-            var version = {
-                current_version: 5.4
-            };
             var version = await fetch('https://raw.githack.com/ethanaobrien/emulator-button/main/version.json');
             var version = await version.text();
             var version = JSON.parse(version);
         } catch(e) {
-            var version = {
-                current_version: 5.4
-            };
+            return;
         };
-        var usingVersion = 5.4;
+        var usingVersion = emuVersion;
         if (usingVersion < version.current_version) {
             var a = ce('div');
             var html = '<h2>Version ' + version.current_version + ' is out! <a href="https://raw.githack.com/ethanaobrien/emulator-button/main/index.html" target="_blank">Click Here</a> to update.</h2><p>Changes:</p><ul>';
@@ -28,18 +32,12 @@
     try {
         if (window.VARRRSSZZ) {
             var a = [];
-            var b = [];
             for (var k in window) {
                 a.push(k);
             };
             for (var i=0; i<a.length; i++) {
-                if (! window.VARRRSSZZ.includes(a[i])) {
-                    b.push(a[i]);
-                };
-            };
-            for (var i=0; i<b.length; i++) {
-                if (window[b[i]]) {
-                    delete window[b[i]];
+                if (! window.VARRRSSZZ.includes(a[i]) && window[a[i]]) {
+                    delete window[a[i]]
                 };
             };
         };
@@ -150,96 +148,20 @@
             };
         });
     };
-    function putInSystemCache(key, data, version) {
-        var openRequest = indexedDB.open("ejs-system", 1);
-        openRequest.onerror = function() {};
-        openRequest.onsuccess = function() {
-            var db = openRequest.result;
-            var transaction = db.transaction(["system"], "readwrite");
-            var objectStore = transaction.objectStore("system");
-            var system = {version: version, data: data};
-            var request = objectStore.put(system, key);
-            request.onerror = function() {};
-            request.onsuccess = function() {};
-        };
-        openRequest.onupgradeneeded = function() {
-            var db = openRequest.result;
-            if (! db.objectStoreNames.contains('system')) {
-                db.createObjectStore('system');
-            };
-        };
-    };
-    function checkSystemCache(key, version) {
-        return new Promise(function(resolve, reject) {
-            var openRequest = indexedDB.open("ejs-system", 1);
-            openRequest.onerror = function() {};
-            openRequest.onsuccess = function() {
-                var db = openRequest.result;
-                var transaction = db.transaction(["system"], "readwrite");
-                var objectStore = transaction.objectStore("system");
-                var request = objectStore.get(key);
-                request.onsuccess = function(e) {
-                    var result = e.target.result;
-                    if (! result) {
-                        resolve(true);
-                        return;
-                    };
-                    if (result.version != version) {
-                        resolve(true);
-                        return;
-                    };
-                    resolve(false);
-                };
-                request.onerror = function() {};
-            };
-            openRequest.onupgradeneeded = function() {
-                var db = openRequest.result;
-                if (! db.objectStoreNames.contains('system')) {
-                    db.createObjectStore('system');
-                };
-            };
-        });
-    };
     async function cacheCommonModules() {
         var js = 'text/javascript';
         var baseUrl = 'https://rawcdn.githack.com/ethanaobrien/emulatorjs/main/data/';
         var status = document.getElementById('offlineStatus');
         try {
-            getCachedFileUrl('loader', baseUrl + 'loader.js', js, true);
-            getCachedFileUrl('webrtc', baseUrl + 'webrtc-adapter.js', js, true);
-            getCachedFileUrl('rar', baseUrl + 'libunrar.js', js, true);
-            getCachedFileUrl('zip', baseUrl + 'extractzip.js', js, true);
-            getCachedFileUrl('7zip', baseUrl + 'extract7z.js', js, true);
-            getCachedFileUrl('emulator', baseUrl + 'emulator.js', js, true);
-            getCachedFileUrl('emuMain', baseUrl + 'emu-main.js', js, true);
-            getCachedFileUrl('rarMem', baseUrl+'libunrar.js.mem', js, true);
-            var v = await getCachedFileUrl('v', baseUrl + 'v.json', 'application/json', true);
-            var v = await fetch(v);
-            var v = await v.text();
-            var v = JSON.parse(v);
-            var coresToCache = [
-                {system: 'gb', type: 'asmjs'},
-                {system: 'gba', type: 'asmjs'},
-                {system: 'n64', type: 'asmjs'},
-                {system: 'nds', type: 'asmjs'},
-                {system: 'nds', type: 'wasm'},
-                {system: 'nes', type: 'asmjs'},
-                {system: 'nes', type: 'wasm'},
-                {system: 'snes', type: 'asmjs'},
-                {system: 'snes', type: 'wasm'}
-            ];
-            for (var i=0; i<coresToCache.length; i++) {
-                var url = baseUrl + coresToCache[i].system + '-' + coresToCache[i].type + '.data';
-                var key = coresToCache[i].system + '-' + coresToCache[i].type + '.data';
-                var version = v[coresToCache[i].system].version;
-                var needToGet = await checkSystemCache(key, version);
-                if (needToGet) {
-                    var data = await fetch(url);
-                    var data = await data.arrayBuffer();
-                    var data = new Uint8Array(data);
-                    putInSystemCache(key, data, version);
-                };
-            };
+            await getCachedFileUrl('loader', baseUrl + 'loader.js', js, true);
+            await getCachedFileUrl('webrtc', baseUrl + 'webrtc-adapter.js', js, true);
+            await getCachedFileUrl('rar', baseUrl + 'libunrar.js', js, true);
+            await getCachedFileUrl('zip', baseUrl + 'extractzip.js', js, true);
+            await getCachedFileUrl('7zip', baseUrl + 'extract7z.js', js, true);
+            await getCachedFileUrl('emulator', baseUrl + 'emulator.js', js, true);
+            await getCachedFileUrl('emuMain', baseUrl + 'emu-main.js', js, true);
+            await getCachedFileUrl('rarMem', baseUrl+'libunrar.js.mem', js, true);
+            await getCachedFileUrl('v', baseUrl + 'v.json', 'application/json', true);
             status.innerHTML = 'Offline Mode: READY';
         } catch(e) {
             status.innerHTML = 'Offline Mode: NOT READY';
@@ -392,14 +314,9 @@
             };
         };
     };
-    async function loadGame(fileURL, gameName, core, adUrl, gameID, netplayUrl) {
+    async function loadGame(fileURL, gameName, core, adUrl, gameID, netplayUrl, color) {
         document.removeEventListener('keydown', keyDDown, false);
         var js = 'text/javascript';
-        var color = function() {
-            var colors = ['#FF0000', '#FFA500', '#008000', '#0000FF', '#800080'];
-            var random = Math.floor(Math.random() * colors.length);
-            return colors[random];
-        }();
         var base = 'https://rawcdn.githack.com/ethanaobrien/emulatorjs/main/data/';
         var loader = await getCachedFileUrl('loader', base+'loader.js', js);
         var webrtc = await getCachedFileUrl('webrtc', base+'webrtc-adapter.js', js);
@@ -464,12 +381,13 @@
     b.id = 'emulatorjsElemAfterTitle';
     b.innerHTML = 'Click the choose file button to upload a rom (you can also drag and drop the file)';
     a.appendChild(b);
-    a.appendChild(ce('br'));
+    br(a);
     var file = ce('input');
     async function selectedFile(file) {
         var adUrl = document.getElementById('adUrl').value;
         var gameID = document.getElementById('gameID').value;
         var netplayUrl = document.getElementById('netplayUrl').value;
+        var color = document.getElementById('color').value;
         while(document.body.firstChild) {
             document.body.removeChild(document.body.firstChild);
         };
@@ -514,7 +432,7 @@
                     var p = ce('h2');
                     p.innerHTML = 'Unable to auto-detect system. Please select the desired system.';
                     a.appendChild(p);
-                    a.appendChild(ce('br'));
+                    br(a);
                     for (var k in cores) {
                         var input = ce('input');
                         input.type = 'radio';
@@ -526,9 +444,9 @@
                         label.for = 'game-' + cores[k];
                         label.innerHTML = k;
                         a.appendChild(label);
-                        a.appendChild(ce('br'));
+                        br(a);
                     };
-                    a.appendChild(ce('br'));
+                    br(a);
                     var submit = ce('input');
                     submit.type = 'submit';
                     submit.value = 'Load Game';
@@ -555,7 +473,7 @@
             }();
         };
         var fileURL = URL.createObjectURL(new Blob([file]));
-        loadGame(fileURL, gameName, core, adUrl, gameID, netplayUrl);
+        loadGame(fileURL, gameName, core, adUrl, gameID, netplayUrl, color);
         if (localStorage.getItem('emubuttonCacheRoms') != 'false' && cacheRom.checked) {
             var reader = new FileReader();
             reader.onload = function(e) {
@@ -570,9 +488,9 @@
     file.onchange = function() {selectedFile(file.files[0])};
     file.type = 'file';
     a.appendChild(file);
-    a.appendChild(ce('br'));
-    a.appendChild(ce('br'));
-    a.appendChild(ce('br'));
+    br(a);
+    br(a);
+    br(a);
     var detectCore = ce('input');
     detectCore.type = 'checkbox';
     detectCore.checked = true;
@@ -582,8 +500,8 @@
     w.for = 'detectCore';
     w.innerHTML = 'Auto-detect core';
     a.appendChild(w);
-    a.appendChild(ce('br'));
-    a.appendChild(ce('br'));
+    br(a);
+    br(a);
     var cachedRomsDiv = ce('div');
     var cacheRom = ce('input');
     cacheRom.type = 'checkbox';
@@ -594,18 +512,18 @@
     w.for = 'cacheRom';
     w.innerHTML = 'Cache this rom';
     cachedRomsDiv.appendChild(w);
-    cachedRomsDiv.appendChild(ce('br'));
-    cachedRomsDiv.appendChild(ce('br'));
+    br(cachedRomsDiv);
+    br(cachedRomsDiv);
     var p = ce('h2');
     p.innerHTML = 'Cached Roms';
     cachedRomsDiv.appendChild(p);
-    cachedRomsDiv.appendChild(ce('br'));
-    var games = await getCachedKeys();
+    br(cachedRomsDiv);
     var c = ce('div');
-    function showCachedRoms(games, c) {
+    async function showCachedRoms() {
+        var games = await getCachedKeys();
         games.sort(gamezSortFunc);
         for (var i=0; i<games.length; i++) {
-            var br = ce('br');
+            var brr = ce('br');
             var input = ce('input');
             input.type = 'radio';
             input.id = 'game-' + i;
@@ -628,12 +546,10 @@
                     await deleteRom(info.key);
                     alert('deleted!');
                     if (! c.firstChild) {
-                        var p = ce('p');
-                        p.innerHTML = 'There are no cached Roms';
-                        c.appendChild(p);
+                        cp(c, 'There are no cached Roms');
                     };
                 };
-            }(games[i], input, label, br, y);
+            }(games[i], input, label, brr, y);
             var u = ce('a');
             u.href = 'javascript:void(0)';
             u.innerHTML = 'download';
@@ -653,21 +569,17 @@
             label.appendChild(p);
             label.appendChild(u);
             c.appendChild(label);
-            c.appendChild(br);
+            c.appendChild(brr);
         };
         if (games.length == 0) {
-            var p = ce('p');
-            p.innerHTML = 'There are no cached Roms';
-            c.appendChild(p);
+            cp(c, 'There are no cached Roms');
         };
-        return c;
     };
-    var c = showCachedRoms(games, c);
-    c.id = 'cachedRoms';
+    showCachedRoms();
     cachedRomsDiv.appendChild(c);
-    cachedRomsDiv.appendChild(ce('br'));
-    cachedRomsDiv.appendChild(ce('br'));
-    cachedRomsDiv.appendChild(ce('br'));
+    br(cachedRomsDiv);
+    br(cachedRomsDiv);
+    br(cachedRomsDiv);
     var submit = ce('input');
     submit.type = 'submit';
     submit.value = 'Load Game';
@@ -688,27 +600,23 @@
         var adUrl = document.getElementById('adUrl').value;
         var gameID = document.getElementById('gameID').value;
         var netplayUrl = document.getElementById('netplayUrl').value;
+        var color = document.getElementById('color').value;
         while(document.body.firstChild) {
             document.body.removeChild(document.body.firstChild);
         };
         var blob = await getRomData(game.key);
-        loadGame(URL.createObjectURL(blob), game.name.replaceAll("'", "\\'"), game.core, adUrl, gameID, netplayUrl);
+        loadGame(URL.createObjectURL(blob), game.name.replaceAll("'", "\\'"), game.core, adUrl, gameID, netplayUrl, color);
     };
     cachedRomsDiv.appendChild(submit);
-    cachedRomsDiv.appendChild(ce('br'));
-    cachedRomsDiv.appendChild(ce('br'));
+    br(cachedRomsDiv);
+    br(cachedRomsDiv);
     var clear = ce('button');
-    clear.onclick = function() {
+    clear.onclick = await function() {
         if (! confirm('Are you sure you want to clear the rom cache')) {
             return;
         };
         indexedDB.deleteDatabase('emulatorGameCache');
-        while(document.getElementById('cachedRoms').firstChild) {
-            document.getElementById('cachedRoms').removeChild(document.getElementById('cachedRoms').firstChild);
-        };
-        var p = ce('p');
-        p.innerHTML = 'There are no cached Roms';
-        c.appendChild(p);
+        showCachedRoms();
         alert('cleared!');
     };
     clear.innerHTML = 'Clear Cached Roms';
@@ -716,8 +624,8 @@
     if (localStorage.getItem('emubuttonCacheRoms') == 'false') {
         cachedRomsDiv.style = 'display:none;';
     };
-    cachedRomsDiv.appendChild(ce('br'));
-    cachedRomsDiv.appendChild(ce('br'));
+    br(cachedRomsDiv);
+    br(cachedRomsDiv);
     var q = ce('a');
     q.innerHTML = 'Restore saved export (requires internet)';
     q.href = 'javascript:void(0)';
@@ -729,11 +637,6 @@
             q.appendChild(p);
             var script = ce('script');
             script.onload = function() {
-                setTimeout(function() {
-                    if (started === false) {
-                        p.remove();
-                    };
-                }, 2500);
                 var a = ce('input');
                 a.type = 'file';
                 a.onchange = async function(e) {
@@ -750,11 +653,7 @@
                     };
                     p.innerHTML = 'finished';
                     setTimeout(function() {p.remove();}, 2500);
-                    var games = await getCachedKeys();
-                    while(document.getElementById('cachedRoms').firstChild) {
-                        document.getElementById('cachedRoms').removeChild(document.getElementById('cachedRoms').firstChild);
-                    };
-                    showCachedRoms(games, document.getElementById('cachedRoms'));
+                    showCachedRoms();
                 };
                 a.click();
             };
@@ -763,8 +662,8 @@
         };
     }(cachedRomsDiv);
     cachedRomsDiv.appendChild(q);
-    cachedRomsDiv.appendChild(ce('br'));
-    cachedRomsDiv.appendChild(ce('br'));
+    br(cachedRomsDiv);
+    br(cachedRomsDiv);
     var q = ce('a');
     q.innerHTML = 'Save imported roms (requires internet)';
     q.href = 'javascript:void(0)';
@@ -815,8 +714,13 @@
             cachedRomsDiv.style = 'display:block;';
         };
     };
-    a.appendChild(ce('br'));
+    br(a);
     a.appendChild(toggleCacheSetting);
+    br(a);
+    br(a);
+    var div = ce('div');
+    div.innerHTML = 'Color Theme: <input type="color" id="color" value="'+(localStorage.getItem('emuColorTheme')||'#0011ff')+'">';
+    a.appendChild(div);
     var dev = ce('div');
     dev.innerHTML = '<br><br><h1>Dev Options</h1>ad (iframe) url: <input type="text" id="adUrl"><br><br><br>netplay game id: <input type="number" id="gameID"><br><br>netplay server url: <input type="text" id="netplayUrl"><br><br><br>';
     var button = ce('button');
@@ -834,19 +738,14 @@
     gl.style = 'display:none;';
     gl.innerHTML = '<br><br><h1>Game Links</h1><p><a href="https://archive.org/download/NintendoMultiRomCollectionByGhostware">nes roms</a></p><p><a href="https://archive.org/download/SuperNintendoUSACollectionByGhostware">snes roms</a></p><p><a href="https://archive.org/download/GameboyClassicRomCollectionByGhostware">gameboy classic roms</a></p><p><a href="https://archive.org/download/Nintendo64V2RomCollectionByGhostware">nintendo 64 roms</a></p><p><a href="https://archive.org/download/NintendoDSRomCollectionByGhostware">nintendo ds roms</a></p>';
     a.appendChild(gl);
-    a.appendChild(ce('br'));
-    a.appendChild(ce('br'));
-    var p = ce('p');
-    p.innerHTML = 'Game-Button: Version 5.4';
-    a.appendChild(p);
-    var b = ce('p');
-    b.innerHTML = 'Button Last Updated: January 17, 2022';
-    a.appendChild(b);
-    var p = ce('p');
-    p.innerHTML = 'Offline Mode: CHECKING';
-    p.id = 'offlineStatus';
-    a.appendChild(p);
+    br(a);
+    br(a);
+    cp(a, 'Game-Button: Version '+emuVersion);
+    cp(a, 'Offline Mode: CHECKING', 'offlineStatus');
     document.body.appendChild(a);
+    document.getElementById('color').addEventListener('change', function(e) {
+        localStorage.setItem('emuColorTheme', document.getElementById('color').value);
+    });
     document.addEventListener('keydown', keyDDown, false);
     checkForUpdate();
     setTimeout(function() {

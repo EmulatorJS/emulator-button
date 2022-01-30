@@ -1,1 +1,1 @@
-{"current_version": 5.4, "changes": ["Fullscreen bug fix", "resolve page slowdown", "update offline for new emulator file"]}
+{"current_version": 5.5, "changes": ["Changed update function", "Added color picker", "Fixed bug with 'restore saved export' button", "More compression (button takes less space)", "No longer auto-cache game cores"]}
