@@ -1,1 +1,11 @@
-{"current_version": 5.5, "changes": ["Changed update function", "Added color picker", "Fixed bug with 'restore saved export' button", "More compression (button takes less space)", "No longer auto-cache game cores"]}
+{
+    "current_version": 5.6,
+    "changes": [
+        "Re-write cache functions",
+        "Takes less space",
+        "New update function",
+        "Added search bar",
+        "Fix bug where games did not show on load",
+        "Various Cleanup"
+    ]
+}

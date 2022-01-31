@@ -8,7 +8,7 @@
         e.appendChild(p);
         return p;
     };
-    var emuVersion = 5.5;
+    var emuVersion = 5.6;
     async function checkForUpdate() {
         try {
             var version = await fetch('https://raw.githack.com/ethanaobrien/emulator-button/main/version.json');
@@ -21,8 +21,13 @@
         if (usingVersion < version.current_version) {
             var a = ce('div');
             var html = '<h2>Version ' + version.current_version + ' is out! <a href="https://raw.githack.com/ethanaobrien/emulator-button/main/index.html" target="_blank">Click Here</a> to update.</h2><p>Changes:</p><ul>';
-            for (var i=0; i<version.changes.length; i++) {
-                html += '<li>' + version.changes[i] + '</li>';
+            for (var i=usingVersion+0.1; i<=version.current_version; i+=0.1) {
+                i = Math.round(i*10)/10;
+                if (version.changes[i]) {
+                    for (var w=0; w<version.changes[i].length; w++) {
+                        html += '<li>' + version.changes[i][w] + '</li>';
+                    };
+                };
             };
             html += '</ul><br>';
             a.innerHTML = html;
@@ -64,13 +69,13 @@
         if (key == 'Backspace') {
             pressText = '';
         } else {
-            pressText += key
+            pressText += key.toLowerCase();
         };
-        if (pressText.split('dev mode').length != 1) {
+        if (pressText.includes('dev mode')) {
             pressText = '';
             document.getElementById('dev').style = 'display:block;';
             localStorage.setItem('emuButtonDev', true);
-        } else if (pressText.split('show me games').length != 1) {
+        } else if (pressText.includes('show me games')) {
             pressText = '';
             document.getElementById('gameLinks').style = 'display:block;';
         };
@@ -105,121 +110,77 @@
     document.addEventListener("dragleave", drag, false);
     document.addEventListener("dragenter", drag, false);
     document.addEventListener("drop", drop, false);
-    function getCachedFileUrl(key, path, mime, update) {
+    function get(key, dbName, storeName) {
         return new Promise(function(resolve, reject) {
-            var openRequest = indexedDB.open("mainEmuFiles", 1);
+            var openRequest = indexedDB.open(dbName, 1);
             openRequest.onerror = function() {};
             openRequest.onsuccess = function() {
                 var db = openRequest.result;
-                var transaction = db.transaction(["mainEmuFiles"], "readwrite");
-                var objectStore = transaction.objectStore("mainEmuFiles");
+                var transaction = db.transaction([storeName], "readwrite");
+                var objectStore = transaction.objectStore(storeName);
                 var request = objectStore.get(key);
                 request.onsuccess = async function(e) {
-                    var file = e.target.result;
-                    try {
-                        if (update) {
-                            var asd = await fetch(path, {cache: 'no-cache'});
-                        } else {
-                            var asd = await fetch(path);
-                        };
-                    } catch(e) {
-                        if (file) {
-                            resolve(URL.createObjectURL(new Blob([file], {type: mime})));
-                        } else {
-                            reject(e);
-                        };
-                        return;
-                    };
-                    var buffer = await asd.arrayBuffer();
-                    var transaction = db.transaction(["mainEmuFiles"], "readwrite");
-                    var objectStore = transaction.objectStore("mainEmuFiles");
-                    var request = objectStore.put(buffer, key);
-                    request.onsuccess = function() {};
-                    request.onerror = function() {};
-                    resolve(URL.createObjectURL(new Blob([buffer], {type: mime})));
+                    resolve(request.result);
                 };
-                request.onerror = function() {};
+                request.onerror = function() {resolve()};
             };
             openRequest.onupgradeneeded = function() {
                 var db = openRequest.result;
-                if (! db.objectStoreNames.contains('mainEmuFiles')) {
-                    db.createObjectStore('mainEmuFiles');
+                if (! db.objectStoreNames.contains(storeName)) {
+                    db.createObjectStore(storeName);
                 };
             };
         });
     };
-    async function cacheCommonModules() {
-        var js = 'text/javascript';
-        var baseUrl = 'https://rawcdn.githack.com/ethanaobrien/emulatorjs/main/data/';
-        var status = document.getElementById('offlineStatus');
+    function put(key, data, dbName, storeName) {
+        return new Promise(function(resolve, reject) {
+            var openRequest = indexedDB.open(dbName, 1);
+            openRequest.onerror = function() {};
+            openRequest.onsuccess = function() {
+                var db = openRequest.result;
+                var transaction = db.transaction([storeName], "readwrite");
+                var objectStore = transaction.objectStore(storeName);
+                var request = objectStore.put(data, key);
+                request.onerror = function() {resolve()};
+                request.onsuccess = function() {resolve()};
+            };
+            openRequest.onupgradeneeded = function() {
+                var db = openRequest.result;
+                if (! db.objectStoreNames.contains(storeName)) {
+                    db.createObjectStore(storeName);
+                };
+            };
+        })
+    };
+    async function getCachedFileUrl(key, path, mime, update) {
         try {
-            await getCachedFileUrl('loader', baseUrl + 'loader.js', js, true);
-            await getCachedFileUrl('webrtc', baseUrl + 'webrtc-adapter.js', js, true);
-            await getCachedFileUrl('rar', baseUrl + 'libunrar.js', js, true);
-            await getCachedFileUrl('zip', baseUrl + 'extractzip.js', js, true);
-            await getCachedFileUrl('7zip', baseUrl + 'extract7z.js', js, true);
-            await getCachedFileUrl('emulator', baseUrl + 'emulator.js', js, true);
-            await getCachedFileUrl('emuMain', baseUrl + 'emu-main.js', js, true);
-            await getCachedFileUrl('rarMem', baseUrl+'libunrar.js.mem', js, true);
-            await getCachedFileUrl('v', baseUrl + 'v.json', 'application/json', true);
-            status.innerHTML = 'Offline Mode: READY';
+            if (update) {
+                var asd = await fetch(path, {cache: 'no-cache'});
+            } else {
+                var asd = await fetch(path);
+            };
+            var buffer = await asd.arrayBuffer();
+            await put(buffer, key, 'mainEmuFiles', 'mainEmuFiles');
+            return URL.createObjectURL(new Blob([buffer], {type: mime}));
         } catch(e) {
-            status.innerHTML = 'Offline Mode: NOT READY';
+            var file = await get(key, 'mainEmuFiles', 'mainEmuFiles');
+            if (file) {
+                return URL.createObjectURL(new Blob([file], {type: mime}));
+            } else {
+                throw e;
+            };
         };
     };
-    function getCachedKeys() {
-        return new Promise(function(resolve, reject) {
-            var openRequest = indexedDB.open("emulatorGameCache", 1);
-            openRequest.onerror = function() {};
-            openRequest.onsuccess = function() {
-                var db = openRequest.result;
-                var transaction = db.transaction(["emulatorGameCache"], "readwrite");
-                var objectStore = transaction.objectStore("emulatorGameCache");
-                var request = objectStore.get('keys');
-                request.onsuccess = function(e) {
-                    var keys = e.target.result;
-                    if (! keys) {
-                        var transaction = db.transaction(["emulatorGameCache"], "readwrite");
-                        var objectStore = transaction.objectStore("emulatorGameCache");
-                        var request = objectStore.put([], 'keys');
-                        request.onsuccess = function() {};
-                        request.onerror = function() {};
-                        return resolve([]);
-                    };
-                    resolve(keys);
-                };
-                request.onerror = function() {};
-            };
-            openRequest.onupgradeneeded = function() {
-                var db = openRequest.result;
-                if (! db.objectStoreNames.contains('emulatorGameCache')) {
-                    db.createObjectStore('emulatorGameCache');
-                };
-            };
-        });
+    async function getCachedKeys() {
+        var keys = await get('keys', 'emulatorGameCache', 'emulatorGameCache');
+        if (! keys) {
+            keys = [];
+            await put('keys', [], 'emulatorGameCache', 'emulatorGameCache');
+        };
+        return keys;
     };
-    function getRomData(key) {
-        return new Promise(function(resolve, reject) {
-            var openRequest = indexedDB.open("emulatorGameCache", 1);
-            openRequest.onerror = function() {};
-            openRequest.onsuccess = function() {
-                var db = openRequest.result;
-                var transaction = db.transaction(["emulatorGameCache"], "readwrite");
-                var objectStore = transaction.objectStore("emulatorGameCache");
-                var request = objectStore.get(key);
-                request.onsuccess = function() {
-                    var gameData = request.result;
-                    resolve(new Blob([gameData]));
-                };
-                request.onerror = function() {};
-            };
-            openRequest.onupgradeneeded = function() {
-                var db = openRequest.result;
-                if (! db.objectStoreNames.contains('emulatorGameCache')) {
-                    db.createObjectStore('emulatorGameCache');
-                };
-            };
-        });
+    async function getRomData(key) {
+        return new Blob([await get(key, 'emulatorGameCache', 'emulatorGameCache')]);
     };
     function deleteRom(key) {
         return new Promise(function(resolve, reject) {
@@ -256,51 +217,44 @@
         });
     };
     async function createRomCache(data, fileName, core) {
-        return await new Promise(function(resolve, reject) {
-            var openRequest = indexedDB.open("emulatorGameCache", 1);
-            openRequest.onerror = function() {};
-            openRequest.onsuccess = function() {
-                var db = openRequest.result;
-                var transaction = db.transaction(["emulatorGameCache"], "readwrite");
-                var objectStore = transaction.objectStore("emulatorGameCache");
-                var currentKeys = objectStore.get('keys');
-                currentKeys.onsuccess = function() {
-                    var keys = currentKeys.result;
-                    if (! keys) {var keys = []};
-                    var key = fileName.split(' ').join('').toLowerCase();
-                    var key = key.substr(0, key.length - key.split('.').pop().length - 1);
-                    var name = fileName.substr(0, fileName.length - fileName.split('.').pop().length - 1);
-                    var newKey = {key: key, name: name, core: core, fileName: fileName};
-                    for (var i=0; i<keys.length; i++) {
-                        if (keys[i].key == newKey.key && keys[i].core == newKey.core) {
-                            resolve();
-                            return;
-                        };
-                    };
-                    keys.push(newKey);
-                    var request = objectStore.put(keys, 'keys');
-                    request.onsuccess = function() {};
-                    request.onerror = function() {};
-                    var request2 = objectStore.put(data, key);
-                    request2.onsuccess = function() {};
-                    request2.onerror = function() {};
-                    resolve();
-                };
+        var keys = await getCachedKeys();
+        var key = fileName.trim().split(' ').join('').toLowerCase();
+        var key = key.trim().substr(0, key.length - key.split('.').pop().length - 1);
+        var name = fileName.trim().substr(0, fileName.length - fileName.split('.').pop().length - 1);
+        var newKey = {key: key, name: name, core: core, fileName: fileName};
+        for (var i=0; i<keys.length; i++) {
+            if (keys[i].key == newKey.key && keys[i].core == newKey.core) {
+                return;
             };
-            openRequest.onupgradeneeded = function() {
-                var db = openRequest.result;
-                if (! db.objectStoreNames.contains('emulatorGameCache')) {
-                    db.createObjectStore('emulatorGameCache');
-                };
-            };
-        });
+        };
+        keys.push(newKey);
+        await put('keys', keys, 'emulatorGameCache', 'emulatorGameCache');
+        await put(data, key, 'emulatorGameCache', 'emulatorGameCache');
+    };
+    async function cacheCommonModules() {
+        var js = 'text/javascript';
+        var baseUrl = 'https://rawcdn.githack.com/ethanaobrien/emulatorjs/main/data/';
+        var status = document.getElementById('offlineStatus');
+        try {
+            await getCachedFileUrl('loader', baseUrl + 'loader.js', js, true);
+            await getCachedFileUrl('webrtc', baseUrl + 'webrtc-adapter.js', js, true);
+            await getCachedFileUrl('rar', baseUrl + 'libunrar.js', js, true);
+            await getCachedFileUrl('zip', baseUrl + 'extractzip.js', js, true);
+            await getCachedFileUrl('7zip', baseUrl + 'extract7z.js', js, true);
+            await getCachedFileUrl('emulator', baseUrl + 'emulator.js', js, true);
+            await getCachedFileUrl('emuMain', baseUrl + 'emu-main.js', js, true);
+            await getCachedFileUrl('rarMem', baseUrl+'libunrar.js.mem', js, true);
+            await getCachedFileUrl('v', baseUrl + 'v.json', 'application/json', true);
+            status.innerHTML = 'Offline Mode: READY';
+        } catch(e) {
+            status.innerHTML = 'Offline Mode: NOT READY';
+        };
     };
     var resetPageContents = function() {
         while(document.body.firstChild) {
             document.body.removeChild(document.body.firstChild);
         };
-        if (! document.body.style) {document.body.style = {};};
-        document.body.style.backgroundColor = 'white';
+        document.body.style = 'backgroundColor: white;';
         if (document.getElementsByTagName('title')[0]) {
             var title = ce('title');
             title.innerHTML = document.getElementsByTagName('title')[0].innerHTML;
@@ -518,9 +472,38 @@
     p.innerHTML = 'Cached Roms';
     cachedRomsDiv.appendChild(p);
     br(cachedRomsDiv);
-    var c = ce('div');
-    async function showCachedRoms() {
-        var games = await getCachedKeys();
+    var search = ce('ul');
+    search.innerHTML += 'Search: ';
+    var w = ce('input');
+    w.type = 'search';
+    w.addEventListener('input', function(element) {
+        return async function(e) {
+            var value = e.target.value.toLowerCase();
+            var games = await getCachedKeys();
+            if (value.trim() === '') {
+                showCachedRoms(games);
+                return;
+            };
+            var gamez = [];
+            for (var i=0; i<games.length; i++) {
+                if (games[i].name.toLowerCase().includes(value)) {
+                    gamez.push(games[i]);
+                }
+            };
+            showCachedRoms(gamez, true);
+        };
+    }(w));
+    search.appendChild(w);
+    cachedRomsDiv.appendChild(search);
+    br(cachedRomsDiv);
+    var c = ce('ul');
+    async function showCachedRoms(games, isSearch) {
+        if (! games) {
+            games = await getCachedKeys();
+        };
+        while (c.firstChild) {
+            c.removeChild(c.firstChild);
+        };
         games.sort(gamezSortFunc);
         for (var i=0; i<games.length; i++) {
             var brr = ce('br');
@@ -546,7 +529,7 @@
                     await deleteRom(info.key);
                     alert('deleted!');
                     if (! c.firstChild) {
-                        cp(c, 'There are no cached Roms');
+                        cp(c, isSearch ? 'No roms match your search' : 'There are no cached Roms');
                     };
                 };
             }(games[i], input, label, brr, y);
@@ -563,19 +546,17 @@
                     a.click();
                 };
             }(games[i]);
-            var p = ce('f');
-            p.innerHTML = ' - ';
-            label.appendChild(y);
-            label.appendChild(p);
             label.appendChild(u);
+            label.innerHTML += ' - ';
+            label.appendChild(y);
             c.appendChild(label);
             c.appendChild(brr);
         };
         if (games.length == 0) {
-            cp(c, 'There are no cached Roms');
+            cp(c, isSearch ? 'No roms match your search' : 'There are no cached Roms');
         };
     };
-    showCachedRoms();
+    await showCachedRoms();
     cachedRomsDiv.appendChild(c);
     br(cachedRomsDiv);
     br(cachedRomsDiv);
@@ -611,12 +592,12 @@
     br(cachedRomsDiv);
     br(cachedRomsDiv);
     var clear = ce('button');
-    clear.onclick = await function() {
+    clear.onclick = async function() {
         if (! confirm('Are you sure you want to clear the rom cache')) {
             return;
         };
         indexedDB.deleteDatabase('emulatorGameCache');
-        showCachedRoms();
+        await showCachedRoms();
         alert('cleared!');
     };
     clear.innerHTML = 'Clear Cached Roms';
@@ -653,7 +634,7 @@
                     };
                     p.innerHTML = 'finished';
                     setTimeout(function() {p.remove();}, 2500);
-                    showCachedRoms();
+                    await showCachedRoms();
                 };
                 a.click();
             };
@@ -748,7 +729,5 @@
     });
     document.addEventListener('keydown', keyDDown, false);
     checkForUpdate();
-    setTimeout(function() {
-        cacheCommonModules();
-    }, 2000);
+    setTimeout(cacheCommonModules, 2000);
 })();
