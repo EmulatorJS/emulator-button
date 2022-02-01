@@ -8,7 +8,7 @@
         e.appendChild(p);
         return p;
     };
-    var emuVersion = 5.6;
+    var emuVersion = 5.7;
     async function checkForUpdate() {
         try {
             var version = await fetch('https://raw.githack.com/ethanaobrien/emulator-button/main/version.json');
@@ -23,9 +23,10 @@
             var html = '<h2>Version ' + version.current_version + ' is out! <a href="https://raw.githack.com/ethanaobrien/emulator-button/main/index.html" target="_blank">Click Here</a> to update.</h2><p>Changes:</p><ul>';
             for (var i=usingVersion+0.1; i<=version.current_version; i+=0.1) {
                 i = Math.round(i*10)/10;
-                if (version.changes[i]) {
-                    for (var w=0; w<version.changes[i].length; w++) {
-                        html += '<li>' + version.changes[i][w] + '</li>';
+                var y = i.toString();
+                if (version.changes[y]) {
+                    for (var w=0; w<version.changes[y].length; w++) {
+                        html += '<li>' + version.changes[y][w] + '</li>';
                     };
                 };
             };
@@ -497,14 +498,16 @@
     cachedRomsDiv.appendChild(search);
     br(cachedRomsDiv);
     var c = ce('ul');
+    var gameUiArray;
     async function showCachedRoms(games, isSearch) {
         if (! games) {
             games = await getCachedKeys();
         };
+        games.sort(gamezSortFunc);
+        gameUiArray = games;
         while (c.firstChild) {
             c.removeChild(c.firstChild);
         };
-        games.sort(gamezSortFunc);
         for (var i=0; i<games.length; i++) {
             var brr = ce('br');
             var input = ce('input');
@@ -565,8 +568,7 @@
     submit.type = 'submit';
     submit.value = 'Load Game';
     submit.onclick = async function(e) {
-        var games = await getCachedKeys();
-        games.sort(gamezSortFunc);
+        var games = gameUiArray;
         var q = false;
         var radios = document.getElementsByName('game');
         for (var i=0; i<radios.length; i++) {
