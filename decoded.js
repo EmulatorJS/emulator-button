@@ -8,7 +8,7 @@
         e.appendChild(p);
         return p;
     };
-    var emuVersion = 5.7;
+    var emuVersion = 5.8;
     async function checkForUpdate() {
         if (window.navigator.onLine === false) {return};
         try {
@@ -292,15 +292,15 @@
         EJS_core = core;
         EJS_lightgun = false;
         EJS_pathtodata = base;
-        if (adUrl && adUrl != '') {
+        if (adUrl && adUrl.trim() != '') {
             EJS_AdUrl = adUrl;
         };
-        if (gameID && gameID != '') {
-            EJS_gameID = gameID;
-        };
-        if (netplayUrl && netplayUrl != '') {
-            EJS_netplayUrl = netplayUrl;
-        };
+        if (! gameID)
+            gameID = 1;
+        EJS_gameID = gameID;
+        if (! netplayUrl) 
+            netplayUrl = 'https://emulatorjs.herokuapp.com/';
+        EJS_netplayUrl = netplayUrl;
         var script = ce('script');
         script.src = loader;
         document.body.appendChild(script);
@@ -319,6 +319,10 @@
     br(a);
     var file = ce('input');
     async function selectedFile(file) {
+        if (document.getElementById('offlineStatus') && document.getElementById('offlineStatus').innerHTML === 'Offline Mode: NOT READY') {
+            alert('either you are offline, or githack is down, please try again later');
+            return;
+        }
         var adUrl = document.getElementById('adUrl').value;
         var gameID = document.getElementById('gameID').value;
         var netplayUrl = document.getElementById('netplayUrl').value;
@@ -537,7 +541,7 @@
             c.appendChild(label);
             c.appendChild(brr);
         };
-        if (games.length == 0) {
+        if (games.length === 0) {
             cp(c, isSearch ? 'No roms match your search' : 'There are no cached Roms');
         };
     };
@@ -550,7 +554,7 @@
     submit.type = 'submit';
     submit.value = 'Load Game';
     submit.onclick = async function(e) {
-        if (document.getElementById('offlineStatus').innerHTML === 'Offline Mode: NOT READY') {
+        if (document.getElementById('offlineStatus') && document.getElementById('offlineStatus').innerHTML === 'Offline Mode: NOT READY') {
             alert('either you are offline, or githack is down, please try again later');
             return;
         }

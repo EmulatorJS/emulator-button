@@ -12,6 +12,12 @@
         "5.7": [
             "Bug Fix with search",
             "Fix bug with new update feature renderer"
+        ],
+        "5.8": [
+            "Fix critical bug when caching roms",
+            "Fix cached game not starting",
+            "Add netplay on by default",
+            "Fix Download button"
         ]
     }
 }
