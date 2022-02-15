@@ -10,6 +10,7 @@
     };
     var emuVersion = 5.7;
     async function checkForUpdate() {
+        if (window.navigator.onLine === false) {return};
         try {
             var version = await fetch('https://raw.githack.com/ethanaobrien/emulator-button/main/version.json');
             var version = await version.text();
@@ -35,30 +36,9 @@
             document.getElementById('emulatorjsElemAfterTitle').parentNode.insertBefore(a, document.getElementById('emulatorjsElemAfterTitle'));
         };
     };
-    try {
-        if (window.VARRRSSZZ) {
-            var a = [];
-            for (var k in window) {
-                a.push(k);
-            };
-            for (var i=0; i<a.length; i++) {
-                if (! window.VARRRSSZZ.includes(a[i]) && window[a[i]]) {
-                    delete window[a[i]]
-                };
-            };
-        };
-        if (window.EJS_emulator && window.EJS_emulator.eventListeners) {
-            for (var i=0; i<EJS_emulator.eventListeners.length; i++) {
-                var a = EJS_emulator.eventListeners[i];
-                a.element.removeEventListener(a.type, a.callback, a.capture);
-            };
-        };
-    } catch(e) {};
-    var a = [];
-    for (var k in window) {
-        a.push(k);
-    };
-    window.VARRRSSZZ = a;
+    if (typeof EJS_terminate == 'function') {
+        EJS_terminate();
+    }
     if (String.prototype.replaceAll === undefined) {
         String.prototype.replaceAll = function(a, b) {
             return this.split(a).join(b);
@@ -154,22 +134,21 @@
         })
     };
     async function getCachedFileUrl(key, path, mime, update) {
-        try {
-            if (update) {
-                var asd = await fetch(path, {cache: 'no-cache'});
-            } else {
-                var asd = await fetch(path);
-            };
-            var buffer = await asd.arrayBuffer();
-            await put(buffer, key, 'mainEmuFiles', 'mainEmuFiles');
-            return URL.createObjectURL(new Blob([buffer], {type: mime}));
-        } catch(e) {
+        if (! update) {
             var file = await get(key, 'mainEmuFiles', 'mainEmuFiles');
             if (file) {
                 return URL.createObjectURL(new Blob([file], {type: mime}));
             } else {
-                throw e;
-            };
+                update = true;
+            }
+        }
+        try {
+            var asd = await fetch(path, {cache: 'no-cache'});
+            var buffer = await asd.arrayBuffer();
+            await put(buffer, key, 'mainEmuFiles', 'mainEmuFiles');
+            return URL.createObjectURL(new Blob([buffer], {type: mime}));
+        } catch(e) {
+            throw e;
         };
     };
     async function getCachedKeys() {
@@ -181,7 +160,8 @@
         return keys;
     };
     async function getRomData(key) {
-        return new Blob([await get(key, 'emulatorGameCache', 'emulatorGameCache')]);
+        var a = await get(key, 'emulatorGameCache', 'emulatorGameCache');
+        return new Blob([a]);
     };
     function deleteRom(key) {
         return new Promise(function(resolve, reject) {
@@ -230,7 +210,7 @@
         };
         keys.push(newKey);
         await put('keys', keys, 'emulatorGameCache', 'emulatorGameCache');
-        await put(data, key, 'emulatorGameCache', 'emulatorGameCache');
+        await put(key, data, 'emulatorGameCache', 'emulatorGameCache');
     };
     async function cacheCommonModules() {
         var js = 'text/javascript';
@@ -550,7 +530,9 @@
                 };
             }(games[i]);
             label.appendChild(u);
-            label.innerHTML += ' - ';
+            var x = ce('asfdgh');
+            x.innerHTML = ' - ';
+            label.appendChild(x);
             label.appendChild(y);
             c.appendChild(label);
             c.appendChild(brr);
@@ -568,6 +550,10 @@
     submit.type = 'submit';
     submit.value = 'Load Game';
     submit.onclick = async function(e) {
+        if (document.getElementById('offlineStatus').innerHTML === 'Offline Mode: NOT READY') {
+            alert('either you are offline, or githack is down, please try again later');
+            return;
+        }
         var games = gameUiArray;
         var q = false;
         var radios = document.getElementsByName('game');
