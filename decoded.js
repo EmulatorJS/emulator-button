@@ -8,9 +8,20 @@
         e.appendChild(p);
         return p;
     };
-    var emuVersion = 5.8;
+    var emuVersion = 5.9;
+    var updateFiles = function() {
+        var q = localStorage.getItem('EJS_BUTTON_UPDATE_INTERVAL');
+        if (! q)
+            q = 20;
+        var rv = (q < 0);
+        q--;
+        if (rv)
+            q = 20;
+        localStorage.setItem('EJS_BUTTON_UPDATE_INTERVAL', q);
+        return rv;
+    }();
     async function checkForUpdate() {
-        if (window.navigator.onLine === false) {return};
+        if (window.navigator.onLine === false || updateFiles === false) {return};
         try {
             var version = await fetch('https://raw.githack.com/ethanaobrien/emulator-button/main/version.json');
             var version = await version.text();
@@ -36,7 +47,7 @@
             document.getElementById('emulatorjsElemAfterTitle').parentNode.insertBefore(a, document.getElementById('emulatorjsElemAfterTitle'));
         };
     };
-    if (typeof EJS_terminate == 'function') {
+    if (typeof window.EJS_terminate == 'function') {
         EJS_terminate();
     }
     if (String.prototype.replaceAll === undefined) {
@@ -148,6 +159,11 @@
             await put(buffer, key, 'mainEmuFiles', 'mainEmuFiles');
             return URL.createObjectURL(new Blob([buffer], {type: mime}));
         } catch(e) {
+            if (update) {
+                var file = await get(key, 'mainEmuFiles', 'mainEmuFiles');
+                if (file)
+                    return URL.createObjectURL(new Blob([file], {type: mime}));
+            }
             throw e;
         };
     };
@@ -253,15 +269,20 @@
         document.removeEventListener('keydown', keyDDown, false);
         var js = 'text/javascript';
         var base = 'https://rawcdn.githack.com/ethanaobrien/emulatorjs/main/data/';
-        var loader = await getCachedFileUrl('loader', base+'loader.js', js);
-        var webrtc = await getCachedFileUrl('webrtc', base+'webrtc-adapter.js', js);
-        var rar = await getCachedFileUrl('rar', base+'libunrar.js', js);
-        var rarMem = await getCachedFileUrl('rarMem', base+'libunrar.js.mem', 'application/json');
-        var zip = await getCachedFileUrl('zip', base+'extractzip.js', js);
-        var sevenzip = await getCachedFileUrl('7zip', base+'extract7z.js', js);
-        var emulator = await getCachedFileUrl('emulator', base+'emulator.js', js);
-        var emuMain = await getCachedFileUrl('emuMain', base + 'emu-main.js', js);
-        var v = await getCachedFileUrl('v', base+'v.json', 'application/json');
+        try {
+            var loader = await getCachedFileUrl('loader', base+'loader.js', js);
+            var webrtc = await getCachedFileUrl('webrtc', base+'webrtc-adapter.js', js);
+            var rar = await getCachedFileUrl('rar', base+'libunrar.js', js);
+            var rarMem = await getCachedFileUrl('rarMem', base+'libunrar.js.mem', 'application/json');
+            var zip = await getCachedFileUrl('zip', base+'extractzip.js', js);
+            var sevenzip = await getCachedFileUrl('7zip', base+'extract7z.js', js);
+            var emulator = await getCachedFileUrl('emulator', base+'emulator.js', js);
+            var emuMain = await getCachedFileUrl('emuMain', base + 'emu-main.js', js);
+            var v = await getCachedFileUrl('v', base+'v.json', 'application/json');
+        } catch(e) {
+            alert('looks like githack is down or you are offline. Please try again later.');
+            return;
+        }
         var paths = {
             "v.json": v,
             "emulator.js": emulator,
@@ -319,7 +340,7 @@
     br(a);
     var file = ce('input');
     async function selectedFile(file) {
-        if (document.getElementById('offlineStatus') && document.getElementById('offlineStatus').innerHTML === 'Offline Mode: NOT READY') {
+        if (document.getElementById('offlineStatus') && document.getElementById('offlineStatus').innerHTML === 'Offline Mode: NOT READY' && window.navigator.onLine === false) {
             alert('either you are offline, or githack is down, please try again later');
             return;
         }
@@ -554,7 +575,7 @@
     submit.type = 'submit';
     submit.value = 'Load Game';
     submit.onclick = async function(e) {
-        if (document.getElementById('offlineStatus') && document.getElementById('offlineStatus').innerHTML === 'Offline Mode: NOT READY') {
+        if (document.getElementById('offlineStatus') && document.getElementById('offlineStatus').innerHTML === 'Offline Mode: NOT READY' && window.navigator.onLine === false) {
             alert('either you are offline, or githack is down, please try again later');
             return;
         }
@@ -598,9 +619,11 @@
         cachedRomsDiv.style = 'display:none;';
     };
     br(cachedRomsDiv);
-    br(cachedRomsDiv);
+    var qwe = ce('div');
+    br(qwe);
+    qwe.style = window.navigator.onLine?'display:inline;':'display:none;';
     var q = ce('a');
-    q.innerHTML = 'Restore saved export (requires internet)';
+    q.innerHTML = 'Restore saved export';
     q.href = 'javascript:void(0)';
     q.onclick = function(q) {
         return function() {
@@ -633,16 +656,16 @@
             script.src = 'https://raw.githack.com/Stuk/jszip/master/dist/jszip.js';
             document.body.appendChild(script);
         };
-    }(cachedRomsDiv);
-    cachedRomsDiv.appendChild(q);
-    br(cachedRomsDiv);
-    br(cachedRomsDiv);
-    var q = ce('a');
-    q.innerHTML = 'Save imported roms (requires internet)';
-    q.href = 'javascript:void(0)';
-    q.onclick = function(q, y) {
+    }(qwe);
+    qwe.appendChild(q);
+    br(qwe);
+    br(qwe);
+    var t = ce('a');
+    t.innerHTML = 'Save imported roms';
+    t.href = 'javascript:void(0)';
+    t.onclick = function(t, y) {
         return function() {
-            q.remove();
+            t.remove();
             var p = ce('p');
             p.innerHTML = 'Starting...';
             y.appendChild(p);
@@ -667,8 +690,19 @@
             script.src = 'https://raw.githack.com/Stuk/jszip/master/dist/jszip.js';
             document.body.appendChild(script);
         };
-    }(q, cachedRomsDiv);
-    cachedRomsDiv.appendChild(q);
+    }(t, qwe);
+    window.addEventListener('online',  function(qwe) {
+        return function() {
+            qwe.style = 'display:inline;';
+        }
+    }(qwe));
+    window.addEventListener('offline',  function(qwe) {
+        return function() {
+            qwe.style = 'display:none;';
+        }
+    }(qwe));
+    qwe.appendChild(t);
+    cachedRomsDiv.appendChild(qwe);
     a.appendChild(cachedRomsDiv);
     var toggleCacheSetting = ce('button');
     if (localStorage.getItem('emubuttonCacheRoms') != 'false') {
@@ -714,12 +748,14 @@
     br(a);
     br(a);
     cp(a, 'Game-Button: Version '+emuVersion);
-    cp(a, 'Offline Mode: CHECKING', 'offlineStatus');
+    cp(a, 'Offline Mode: '+(updateFiles?'CHECKING':'READY'), 'offlineStatus');
     document.body.appendChild(a);
     document.getElementById('color').addEventListener('change', function(e) {
         localStorage.setItem('emuColorTheme', document.getElementById('color').value);
     });
     document.addEventListener('keydown', keyDDown, false);
     checkForUpdate();
-    setTimeout(cacheCommonModules, 2000);
+    if (updateFiles !== false) {
+        setTimeout(cacheCommonModules, 2000);
+    };
 })();
