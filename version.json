@@ -1,5 +1,5 @@
 {
-    "current_version": 5.9,
+    "current_version": 6.1,
     "changes": {
         "5.6": [
             "Re-write cache functions",
@@ -23,6 +23,10 @@
             "Fix githack overloading with requests",
             "Hide export/import rom exports when offline",
             "Fix bug where it would say offline mode was not ready when it is ready"
+        ],
+        "6.1": [
+            "Fix where emulator core files would not update",
+            "Added use beta cores button"
         ]
     }
 }

@@ -8,7 +8,7 @@
         e.appendChild(p);
         return p;
     };
-    var emuVersion = 5.9;
+    var emuVersion = 6.1;
     var updateFiles = function() {
         var q = localStorage.getItem('EJS_BUTTON_UPDATE_INTERVAL');
         if (! q)
@@ -154,9 +154,9 @@
             }
         }
         try {
-            var asd = await fetch(path, {cache: 'no-cache'});
+            var asd = await fetch(path, {cache: 'reload'});
             var buffer = await asd.arrayBuffer();
-            await put(buffer, key, 'mainEmuFiles', 'mainEmuFiles');
+            await put(key, buffer, 'mainEmuFiles', 'mainEmuFiles');
             return URL.createObjectURL(new Blob([buffer], {type: mime}));
         } catch(e) {
             if (update) {
@@ -197,7 +197,7 @@
                             newKeys.push(keys[i]);
                         };
                     };
-                    var request = objectStore.put(newKeys, 'keys');
+                    var request = objectStore.put('keys', newKeys);
                     request.onsuccess = function() {};
                     request.onerror = function() {};
                     var request2 = objectStore.delete(key);
@@ -265,7 +265,7 @@
             };
         };
     };
-    async function loadGame(fileURL, gameName, core, adUrl, gameID, netplayUrl, color) {
+    async function loadGame(fileURL, gameName, core, adUrl, gameID, netplayUrl, color, useBetaCores) {
         document.removeEventListener('keydown', keyDDown, false);
         var js = 'text/javascript';
         var base = 'https://rawcdn.githack.com/ethanaobrien/emulatorjs/main/data/';
@@ -316,6 +316,7 @@
         if (adUrl && adUrl.trim() != '') {
             EJS_AdUrl = adUrl;
         };
+        EJS_BETA = useBetaCores || false;
         if (! gameID)
             gameID = 1;
         EJS_gameID = gameID;
@@ -348,6 +349,7 @@
         var gameID = document.getElementById('gameID').value;
         var netplayUrl = document.getElementById('netplayUrl').value;
         var color = document.getElementById('color').value;
+        var useBetaCores = betaCores.checked;
         while(document.body.firstChild) {
             document.body.removeChild(document.body.firstChild);
         };
@@ -433,7 +435,7 @@
             }();
         };
         var fileURL = URL.createObjectURL(new Blob([file]));
-        loadGame(fileURL, gameName, core, adUrl, gameID, netplayUrl, color);
+        loadGame(fileURL, gameName, core, adUrl, gameID, netplayUrl, color, useBetaCores);
         if (localStorage.getItem('emubuttonCacheRoms') != 'false' && cacheRom.checked) {
             var reader = new FileReader();
             reader.onload = function(e) {
@@ -471,6 +473,16 @@
     var w = ce('label');
     w.for = 'cacheRom';
     w.innerHTML = 'Cache this rom';
+    cachedRomsDiv.appendChild(w);
+    br(cachedRomsDiv);
+    br(cachedRomsDiv);
+    var betaCores = ce('input');
+    betaCores.type = 'checkbox';
+    betaCores.name = 'betaCores';
+    cachedRomsDiv.appendChild(betaCores);
+    var w = ce('label');
+    w.for = 'betaCores';
+    w.innerHTML = 'Use Beta Cores';
     cachedRomsDiv.appendChild(w);
     br(cachedRomsDiv);
     br(cachedRomsDiv);
@@ -595,11 +607,12 @@
         var gameID = document.getElementById('gameID').value;
         var netplayUrl = document.getElementById('netplayUrl').value;
         var color = document.getElementById('color').value;
+        var useBetaCores = betaCores.checked;
         while(document.body.firstChild) {
             document.body.removeChild(document.body.firstChild);
         };
         var blob = await getRomData(game.key);
-        loadGame(URL.createObjectURL(blob), game.name.replaceAll("'", "\\'"), game.core, adUrl, gameID, netplayUrl, color);
+        loadGame(URL.createObjectURL(blob), game.name.replaceAll("'", "\\'"), game.core, adUrl, gameID, netplayUrl, color, useBetaCores);
     };
     cachedRomsDiv.appendChild(submit);
     br(cachedRomsDiv);
