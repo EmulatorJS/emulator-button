@@ -8,17 +8,45 @@
         e.appendChild(p);
         return p;
     };
-    var emuVersion = 6.1;
-    var updateFiles = function() {
-        var q = localStorage.getItem('EJS_BUTTON_UPDATE_INTERVAL');
-        if (! q)
-            q = 20;
-        var rv = (q < 0);
-        q--;
-        if (rv)
-            q = 20;
-        localStorage.setItem('EJS_BUTTON_UPDATE_INTERVAL', q);
-        return rv;
+    var emuVersion = 6.2;
+    var updateFiles = await function() {
+        return new Promise(async function(a, b) {
+            if (window.navigator.onLine === false) {
+                a(false);
+                return;
+            }
+            var resolved = false;
+            setTimeout(function() {
+                if (resolved === false) {
+                    a(false);
+                    resolved = true;
+                }
+            }, 500);
+            try {
+                var res = await fetch('https://rawcdn.githack.com/ethanaobrien/emulatorjs/main/data/version.json');
+                res = await res.text();
+                var json = JSON.parse(res);
+                var version = json['current_version'];
+            } catch(e) {
+                if (resolved === false) {
+                    resolved = true;
+                    a(false);
+                };
+                return;
+            }
+            if (!localStorage.getItem('EJS_BUTTON_VERSION') || (version > localStorage.getItem('EJS_BUTTON_VERSION'))) {
+                localStorage.setItem('EJS_BUTTON_VERSION', version);
+                if (resolved === false) {
+                    resolved = true;
+                    a(true);
+                };
+                return;
+            }
+            if (resolved === false) {
+                resolved = true;
+                a(false);
+            }
+        });
     }();
     async function checkForUpdate() {
         if (window.navigator.onLine === false || updateFiles === false) {return};
@@ -238,8 +266,7 @@
             await getCachedFileUrl('rar', baseUrl + 'libunrar.js', js, true);
             await getCachedFileUrl('zip', baseUrl + 'extractzip.js', js, true);
             await getCachedFileUrl('7zip', baseUrl + 'extract7z.js', js, true);
-            await getCachedFileUrl('emulator', baseUrl + 'emulator.js', js, true);
-            await getCachedFileUrl('emuMain', baseUrl + 'emu-main.js', js, true);
+            await getCachedFileUrl('emuMin', baseUrl + 'emu-min.js', js, true);
             await getCachedFileUrl('rarMem', baseUrl+'libunrar.js.mem', js, true);
             await getCachedFileUrl('v', baseUrl + 'v.json', 'application/json', true);
             status.innerHTML = 'Offline Mode: READY';
@@ -265,7 +292,7 @@
             };
         };
     };
-    async function loadGame(fileURL, gameName, core, adUrl, gameID, netplayUrl, color, useBetaCores) {
+    async function loadGame(fileURL, gameName, core, adUrl, gameID, netplayUrl, color, useBetaCores, lang) {
         document.removeEventListener('keydown', keyDDown, false);
         var js = 'text/javascript';
         var base = 'https://rawcdn.githack.com/ethanaobrien/emulatorjs/main/data/';
@@ -276,8 +303,7 @@
             var rarMem = await getCachedFileUrl('rarMem', base+'libunrar.js.mem', 'application/json');
             var zip = await getCachedFileUrl('zip', base+'extractzip.js', js);
             var sevenzip = await getCachedFileUrl('7zip', base+'extract7z.js', js);
-            var emulator = await getCachedFileUrl('emulator', base+'emulator.js', js);
-            var emuMain = await getCachedFileUrl('emuMain', base + 'emu-main.js', js);
+            var emuMin = await getCachedFileUrl('emuMin', baseUrl + 'emu-min.js', js, true);
             var v = await getCachedFileUrl('v', base+'v.json', 'application/json');
         } catch(e) {
             alert('looks like githack is down or you are offline. Please try again later.');
@@ -285,8 +311,7 @@
         }
         var paths = {
             "v.json": v,
-            "emulator.js": emulator,
-            "emu-main.js": emuMain,
+            "emu-min.js": emuMin,
             "extract7z.js": sevenzip,
             "extractzip.js": zip,
             "libunrar.js": rar,
@@ -303,6 +328,7 @@
             a.style = 'width:'+window.innerWidth+'px;height:'+window.innerHeight+'px;max-width:100%';
         };
         document.body.appendChild(a);
+        EJS_language = lang;
         EJS_color = color;
         EJS_startOnLoaded = true;
         EJS_paths = paths;
@@ -321,7 +347,7 @@
             gameID = 1;
         EJS_gameID = gameID;
         if (! netplayUrl) 
-            netplayUrl = 'https://emulatorjs.herokuapp.com/';
+            netplayUrl = 'https://ejs-emuserver.herokuapp.com/';
         EJS_netplayUrl = netplayUrl;
         var script = ce('script');
         script.src = loader;
@@ -350,6 +376,7 @@
         var netplayUrl = document.getElementById('netplayUrl').value;
         var color = document.getElementById('color').value;
         var useBetaCores = betaCores.checked;
+        var lang = document.getElementById('lang').selectedOptions[0].value;
         while(document.body.firstChild) {
             document.body.removeChild(document.body.firstChild);
         };
@@ -435,7 +462,7 @@
             }();
         };
         var fileURL = URL.createObjectURL(new Blob([file]));
-        loadGame(fileURL, gameName, core, adUrl, gameID, netplayUrl, color, useBetaCores);
+        loadGame(fileURL, gameName, core, adUrl, gameID, netplayUrl, color, useBetaCores, lang);
         if (localStorage.getItem('emubuttonCacheRoms') != 'false' && cacheRom.checked) {
             var reader = new FileReader();
             reader.onload = function(e) {
@@ -608,11 +635,12 @@
         var netplayUrl = document.getElementById('netplayUrl').value;
         var color = document.getElementById('color').value;
         var useBetaCores = betaCores.checked;
+        var lang = document.getElementById('lang').selectedOptions[0].value;
         while(document.body.firstChild) {
             document.body.removeChild(document.body.firstChild);
         };
         var blob = await getRomData(game.key);
-        loadGame(URL.createObjectURL(blob), game.name.replaceAll("'", "\\'"), game.core, adUrl, gameID, netplayUrl, color, useBetaCores);
+        loadGame(URL.createObjectURL(blob), game.name.replaceAll("'", "\\'"), game.core, adUrl, gameID, netplayUrl, color, useBetaCores, lang);
     };
     cachedRomsDiv.appendChild(submit);
     br(cachedRomsDiv);
@@ -740,6 +768,9 @@
     br(a);
     var div = ce('div');
     div.innerHTML = 'Color Theme: <input type="color" id="color" value="'+(localStorage.getItem('emuColorTheme')||'#0011ff')+'">';
+    a.appendChild(div);
+    var div = ce('div');
+    div.innerHTML = '<br>Language: <select id="lang"><option value="en-US">English</option><option value="pt-BR">Portuguese Brasil</option><option value="es-ES">Spanish</option><option value="el-GR">Greek</option><option value="ja-JA">Japanese</option></select>';
     a.appendChild(div);
     var dev = ce('div');
     dev.innerHTML = '<br><br><h1>Dev Options</h1>ad (iframe) url: <input type="text" id="adUrl"><br><br><br>netplay game id: <input type="number" id="gameID"><br><br>netplay server url: <input type="text" id="netplayUrl"><br><br><br>';

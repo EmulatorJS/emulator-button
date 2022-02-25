@@ -27,6 +27,12 @@
         "6.1": [
             "Fix where emulator core files would not update",
             "Added use beta cores button"
+        ],
+        "6.2": [
+            "Offline support for new emulator minified file",
+            "Added ability to change UI language",
+            "Changed update checking",
+            "Fixed netplay server"
         ]
     }
 }
