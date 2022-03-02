@@ -33,6 +33,9 @@
             "Added ability to change UI language",
             "Changed update checking",
             "Fixed netplay server"
+        ],
+        "6.3": [
+            "Multiple critical bug fixes"
         ]
     }
 }

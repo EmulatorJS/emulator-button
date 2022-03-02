@@ -8,7 +8,7 @@
         e.appendChild(p);
         return p;
     };
-    var emuVersion = 6.2;
+    var emuVersion = 6.3;
     var updateFiles = await function() {
         return new Promise(async function(a, b) {
             if (window.navigator.onLine === false) {
@@ -49,7 +49,7 @@
         });
     }();
     async function checkForUpdate() {
-        if (window.navigator.onLine === false || updateFiles === false) {return};
+        if (window.navigator.onLine === false) {return};
         try {
             var version = await fetch('https://raw.githack.com/ethanaobrien/emulator-button/main/version.json');
             var version = await version.text();
@@ -303,7 +303,7 @@
             var rarMem = await getCachedFileUrl('rarMem', base+'libunrar.js.mem', 'application/json');
             var zip = await getCachedFileUrl('zip', base+'extractzip.js', js);
             var sevenzip = await getCachedFileUrl('7zip', base+'extract7z.js', js);
-            var emuMin = await getCachedFileUrl('emuMin', baseUrl + 'emu-min.js', js, true);
+            var emuMin = await getCachedFileUrl('emuMin', base + 'emu-min.js', js, true);
             var v = await getCachedFileUrl('v', base+'v.json', 'application/json');
         } catch(e) {
             alert('looks like githack is down or you are offline. Please try again later.');
