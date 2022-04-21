@@ -31,8 +31,11 @@ self.addEventListener("fetch", (event) => {
                     if (preloadResponse) {
                         return preloadResponse;
                     }
-                    const networkResponse = await fetch(event.request);
-                    return networkResponse;
+                    const res = await fetch(event.request);
+                    if (!res.status.toString().startsWith('2')) {
+                        throw new Error('not ok response code');
+                    }
+                    return res;
                 } catch (e) {
                     const cache = await caches.open(CACHE_NAME);
                     const cachedResponse = await cache.match(OFFLINE_URL);
