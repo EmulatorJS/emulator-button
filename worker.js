@@ -1,9 +1,9 @@
 const CACHE_NAME = "offline";
-const OFFLINE_URL = "https://raw.githack.com/ethanaobrien/emulator-button/main/offline.html";
+const OFFLINE_URL = "offline.html";
 
-self.addEventListener("install", (event) => {
+self.addEventListener("install", function(e) {
     event.waitUntil(
-        (async () => {
+        (async function() {
             const cache = await caches.open(CACHE_NAME);
             await cache.add(new Request(OFFLINE_URL, {cache: "reload"}));
         })()
@@ -11,27 +11,16 @@ self.addEventListener("install", (event) => {
     self.skipWaiting();
 });
 
-self.addEventListener("activate", (event) => {
-    event.waitUntil(
-        (async () => {
-            if ("navigationPreload" in self.registration) {
-                await self.registration.navigationPreload.enable();
-            }
-        })()
-    );
+self.addEventListener("activate", function(e) {
     self.clients.claim();
 });
 
-self.addEventListener("fetch", (event) => {
-    if (event.request.mode === "navigate") {
-        event.respondWith(
-            (async () => {
+self.addEventListener("fetch", function(e) {
+    if (e.request.mode === "navigate") {
+        e.respondWith(
+            (async function() {
                 try {
-                    const preloadResponse = await event.preloadResponse;
-                    if (preloadResponse) {
-                        return preloadResponse;
-                    }
-                    const res = await fetch(event.request);
+                    const res = await fetch(e.request);
                     if (!res.status.toString().startsWith('2')) {
                         throw new Error('not ok response code');
                     }

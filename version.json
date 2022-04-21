@@ -1,5 +1,5 @@
 {
-    "current_version": 6.4,
+    "current_version": 6.5,
     "changes": {
         "5.6": [
             "Re-write cache functions",
@@ -37,8 +37,11 @@
         "6.3": [
             "Multiple critical bug fixes"
         ],
-        "6.3": [
+        "6.4": [
             "Ability to load page while offline"
+        ],
+        "6.5": [
+            "Bug Fix"
         ]
     }
 }

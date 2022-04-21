@@ -8,7 +8,7 @@
         e.appendChild(p);
         return p;
     };
-    var emuVersion = 6.4;
+    var emuVersion = 6.5;
     var updateFiles = await function() {
         return new Promise(async function(a, b) {
             if (window.navigator.onLine === false) {
@@ -801,8 +801,5 @@
     checkForUpdate();
     if (updateFiles !== false) {
         setTimeout(cacheCommonModules, 2000);
-    };
-    if ("serviceWorker" in navigator) {
-        navigator.serviceWorker.register("https://raw.githack.com/ethanaobrien/emulator-button/main/worker.js");
     };
 })();
