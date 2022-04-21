@@ -8,7 +8,7 @@
         e.appendChild(p);
         return p;
     };
-    var emuVersion = 6.3;
+    var emuVersion = 6.4;
     var updateFiles = await function() {
         return new Promise(async function(a, b) {
             if (window.navigator.onLine === false) {
@@ -23,7 +23,7 @@
                 }
             }, 500);
             try {
-                var res = await fetch('https://rawcdn.githack.com/ethanaobrien/emulatorjs/main/data/version.json');
+                var res = await fetch('https://raw.githack.com/ethanaobrien/emulator-button/main/version.json');
                 res = await res.text();
                 var json = JSON.parse(res);
                 var version = json['current_version'];
@@ -801,5 +801,8 @@
     checkForUpdate();
     if (updateFiles !== false) {
         setTimeout(cacheCommonModules, 2000);
+    };
+    if ("serviceWorker" in navigator) {
+        navigator.serviceWorker.register("https://raw.githack.com/ethanaobrien/emulator-button/main/worker.js");
     };
 })();
