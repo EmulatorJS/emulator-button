@@ -1,9 +1,9 @@
 const CACHE_NAME = "offline";
 const OFFLINE_URL = "offline.html";
 
-self.addEventListener("install", function(e) {
+self.addEventListener("install", (event) => {
     event.waitUntil(
-        (async function() {
+        (async () => {
             const cache = await caches.open(CACHE_NAME);
             await cache.add(new Request(OFFLINE_URL, {cache: "reload"}));
         })()
@@ -11,18 +11,18 @@ self.addEventListener("install", function(e) {
     self.skipWaiting();
 });
 
-self.addEventListener("activate", function(e) {
+self.addEventListener("activate", (event) => {
     self.clients.claim();
 });
 
-self.addEventListener("fetch", function(e) {
-    if (e.request.mode === "navigate") {
-        e.respondWith(
-            (async function() {
+self.addEventListener("fetch", (event) => {
+    if (event.request.mode === "navigate") {
+        event.respondWith(
+            (async () => {
                 try {
-                    const res = await fetch(e.request);
+                    const res = await fetch(event.request);
                     if (!res.status.toString().startsWith('2')) {
-                        throw new Error('not ok response code');
+                        throw new Error('status code not ok');
                     }
                     return res;
                 } catch (e) {
