@@ -8,7 +8,7 @@
         e.appendChild(p);
         return p;
     };
-    var emuVersion = 6.5;
+    var emuVersion = 6.6;
     var updateFiles = await function() {
         return new Promise(async function(a, b) {
             if (window.navigator.onLine === false) {
@@ -266,7 +266,8 @@
             await getCachedFileUrl('rar', baseUrl + 'libunrar.js', js, true);
             await getCachedFileUrl('zip', baseUrl + 'extractzip.js', js, true);
             await getCachedFileUrl('7zip', baseUrl + 'extract7z.js', js, true);
-            await getCachedFileUrl('emuMin', baseUrl + 'emu-min.js', js, true);
+            await getCachedFileUrl('emuMin', baseUrl + 'emulator.min.js', js, true);
+            await getCachedFileUrl('emuCSS', baseUrl + 'emu-css.min.css', 'text/css', true);
             await getCachedFileUrl('rarMem', baseUrl+'libunrar.js.mem', js, true);
             await getCachedFileUrl('v', baseUrl + 'v.json', 'application/json', true);
             status.innerHTML = 'Offline Mode: READY';
@@ -303,7 +304,8 @@
             var rarMem = await getCachedFileUrl('rarMem', base+'libunrar.js.mem', 'application/json');
             var zip = await getCachedFileUrl('zip', base+'extractzip.js', js);
             var sevenzip = await getCachedFileUrl('7zip', base+'extract7z.js', js);
-            var emuMin = await getCachedFileUrl('emuMin', base + 'emu-min.js', js, true);
+            var emuMin = await getCachedFileUrl('emuMin', base + 'emulator.min.js', js);
+            var emuCSS = await getCachedFileUrl('emuCSS', baseUrl + 'emu-css.min.css', 'text/css');
             var v = await getCachedFileUrl('v', base+'v.json', 'application/json');
         } catch(e) {
             alert('looks like githack is down or you are offline. Please try again later.');
@@ -311,7 +313,8 @@
         }
         var paths = {
             "v.json": v,
-            "emu-min.js": emuMin,
+            "emulator.min.js": emuMin,
+            "emu-css.min.css": emuCSS,
             "extract7z.js": sevenzip,
             "extractzip.js": zip,
             "libunrar.js": rar,
