@@ -8,52 +8,17 @@
         e.appendChild(p);
         return p;
     };
-    var emuVersion = 6.6;
-    var updateFiles = await function() {
-        return new Promise(async function(a, b) {
-            if (window.navigator.onLine === false) {
-                a(false);
-                return;
-            }
-            var resolved = false;
-            setTimeout(function() {
-                if (resolved === false) {
-                    a(false);
-                    resolved = true;
-                }
-            }, 500);
-            try {
-                var res = await fetch('https://raw.githack.com/ethanaobrien/emulator-button/main/version.json');
-                res = await res.text();
-                var json = JSON.parse(res);
-                var version = json['current_version'];
-            } catch(e) {
-                if (resolved === false) {
-                    resolved = true;
-                    a(false);
-                };
-                return;
-            }
-            if (!localStorage.getItem('EJS_BUTTON_VERSION') || (version > localStorage.getItem('EJS_BUTTON_VERSION'))) {
-                localStorage.setItem('EJS_BUTTON_VERSION', version);
-                if (resolved === false) {
-                    resolved = true;
-                    a(true);
-                };
-                return;
-            }
-            if (resolved === false) {
-                resolved = true;
-                a(false);
-            }
-        });
+    var emuVersion = {{VERSION}};
+    var updateFiles = function() {
+        if (window.navigator.onLine === false) {
+            return false;
+        }
+        return true;
     }();
     async function checkForUpdate() {
-        if (window.navigator.onLine === false) {return};
         try {
             var version = await fetch('https://raw.githack.com/ethanaobrien/emulator-button/main/version.json');
-            var version = await version.text();
-            var version = JSON.parse(version);
+            version = JSON.parse(await version.text());
         } catch(e) {
             return;
         };
@@ -177,8 +142,6 @@
             var file = await get(key, 'mainEmuFiles', 'mainEmuFiles');
             if (file) {
                 return URL.createObjectURL(new Blob([file], {type: mime}));
-            } else {
-                update = true;
             }
         }
         try {
@@ -293,7 +256,7 @@
             };
         };
     };
-    async function loadGame(fileURL, gameName, core, adUrl, gameID, netplayUrl, color, useBetaCores, lang) {
+    async function loadGame(fileURL, gameName, core, adUrl, color, useOldCores, lang) {
         document.removeEventListener('keydown', keyDDown, false);
         var js = 'text/javascript';
         var base = 'https://rawcdn.githack.com/ethanaobrien/emulatorjs/main/data/';
@@ -305,7 +268,7 @@
             var zip = await getCachedFileUrl('zip', base+'extractzip.js', js);
             var sevenzip = await getCachedFileUrl('7zip', base+'extract7z.js', js);
             var emuMin = await getCachedFileUrl('emuMin', base + 'emulator.min.js', js);
-            var emuCSS = await getCachedFileUrl('emuCSS', baseUrl + 'emu-css.min.css', 'text/css');
+            var emuCSS = await getCachedFileUrl('emuCSS', base + 'emu-css.min.css', 'text/css');
             var v = await getCachedFileUrl('v', base+'v.json', 'application/json');
         } catch(e) {
             alert('looks like githack is down or you are offline. Please try again later.');
@@ -336,22 +299,14 @@
         EJS_startOnLoaded = true;
         EJS_paths = paths;
         EJS_player = '#game';
-        EJS_biosUrl = '';
         EJS_gameName = gameName;
         EJS_gameUrl = fileURL;
         EJS_core = core;
-        EJS_lightgun = false;
         EJS_pathtodata = base;
         if (adUrl && adUrl.trim() != '') {
             EJS_AdUrl = adUrl;
         };
-        EJS_BETA = useBetaCores || false;
-        if (! gameID)
-            gameID = 1;
-        EJS_gameID = gameID;
-        if (! netplayUrl) 
-            netplayUrl = 'https://ejs-emuserver.herokuapp.com/';
-        EJS_netplayUrl = netplayUrl;
+        EJS_oldCores = useOldCores || false;
         var script = ce('script');
         script.src = loader;
         document.body.appendChild(script);
@@ -375,10 +330,8 @@
             return;
         }
         var adUrl = document.getElementById('adUrl').value;
-        var gameID = document.getElementById('gameID').value;
-        var netplayUrl = document.getElementById('netplayUrl').value;
         var color = document.getElementById('color').value;
-        var useBetaCores = betaCores.checked;
+        var useOldCores = oldCores.checked;
         var lang = document.getElementById('lang').selectedOptions[0].value;
         while(document.body.firstChild) {
             document.body.removeChild(document.body.firstChild);
@@ -418,7 +371,8 @@
                                  "Sega Game Gear": "segaGG",
                                  "Sega Saturn": "segaSaturn",
                                  "Atari 7800": "atari7800",
-                                 "Atari 2600": "atari2600"};
+                                 "Atari 2600": "atari2600",
+                                 "Atari 5200": "atari5200"};
                     var a = ce('div');
                     a.style = 'padding: 50px;';
                     var p = ce('h2');
@@ -465,7 +419,7 @@
             }();
         };
         var fileURL = URL.createObjectURL(new Blob([file]));
-        loadGame(fileURL, gameName, core, adUrl, gameID, netplayUrl, color, useBetaCores, lang);
+        loadGame(fileURL, gameName, core, adUrl, color, useOldCores, lang);
         if (localStorage.getItem('emubuttonCacheRoms') != 'false' && cacheRom.checked) {
             var reader = new FileReader();
             reader.onload = function(e) {
@@ -506,13 +460,13 @@
     cachedRomsDiv.appendChild(w);
     br(cachedRomsDiv);
     br(cachedRomsDiv);
-    var betaCores = ce('input');
-    betaCores.type = 'checkbox';
-    betaCores.name = 'betaCores';
-    cachedRomsDiv.appendChild(betaCores);
+    var oldCores = ce('input');
+    oldCores.type = 'checkbox';
+    oldCores.name = 'oldCores';
+    cachedRomsDiv.appendChild(oldCores);
     var w = ce('label');
-    w.for = 'betaCores';
-    w.innerHTML = 'Use Beta Cores';
+    w.for = 'oldCores';
+    w.innerHTML = 'Use Old Cores';
     cachedRomsDiv.appendChild(w);
     br(cachedRomsDiv);
     br(cachedRomsDiv);
@@ -634,16 +588,14 @@
         removeDropListen();
         var game = q;
         var adUrl = document.getElementById('adUrl').value;
-        var gameID = document.getElementById('gameID').value;
-        var netplayUrl = document.getElementById('netplayUrl').value;
         var color = document.getElementById('color').value;
-        var useBetaCores = betaCores.checked;
+        var useOldCores = oldCores.checked;
         var lang = document.getElementById('lang').selectedOptions[0].value;
         while(document.body.firstChild) {
             document.body.removeChild(document.body.firstChild);
         };
         var blob = await getRomData(game.key);
-        loadGame(URL.createObjectURL(blob), game.name.replaceAll("'", "\\'"), game.core, adUrl, gameID, netplayUrl, color, useBetaCores, lang);
+        loadGame(URL.createObjectURL(blob), game.name.replaceAll("'", "\\'"), game.core, adUrl, color, useOldCores, lang);
     };
     cachedRomsDiv.appendChild(submit);
     br(cachedRomsDiv);
@@ -776,7 +728,7 @@
     div.innerHTML = '<br>Language: <select id="lang"><option value="en-US">English</option><option value="pt-BR">Portuguese Brasil</option><option value="es-ES">Spanish</option><option value="el-GR">Greek</option><option value="ja-JA">Japanese</option></select>';
     a.appendChild(div);
     var dev = ce('div');
-    dev.innerHTML = '<br><br><h1>Dev Options</h1>ad (iframe) url: <input type="text" id="adUrl"><br><br><br>netplay game id: <input type="number" id="gameID"><br><br>netplay server url: <input type="text" id="netplayUrl"><br><br><br>';
+    dev.innerHTML = '<br><br><h1>Dev Options</h1>ad (iframe) url: <input type="text" id="adUrl"><br><br><br>';
     var button = ce('button');
     button.onclick = function() {
         document.getElementById('dev').style = 'display:none;';
@@ -790,7 +742,7 @@
     var gl = ce('div');
     gl.id = 'gameLinks';
     gl.style = 'display:none;';
-    gl.innerHTML = '<br><br><h1>Game Links</h1><p><a href="https://archive.org/download/NintendoMultiRomCollectionByGhostware">nes roms</a></p><p><a href="https://archive.org/download/SuperNintendoUSACollectionByGhostware">snes roms</a></p><p><a href="https://archive.org/download/GameboyClassicRomCollectionByGhostware">gameboy classic roms</a></p><p><a href="https://archive.org/download/Nintendo64V2RomCollectionByGhostware">nintendo 64 roms</a></p><p><a href="https://archive.org/download/NintendoDSRomCollectionByGhostware">nintendo ds roms</a></p>';
+    gl.innerHTML = '<br><br><h1>Game Links</h1><p><a href="https://archive.org/download/NintendoMultiRomCollectionByGhostware">Nes roms</a></p><p><a href="https://archive.org/download/SuperNintendoUSACollectionByGhostware">Snes roms</a></p><p><a href="https://archive.org/download/GameboyClassicRomCollectionByGhostware">Gameboy classic roms</a></p><p><a href="https://archive.org/download/Nintendo64V2RomCollectionByGhostware">Nintendo 64 roms</a></p><p><a href="https://archive.org/download/NintendoDSRomCollectionByGhostware">Nintendo ds roms</a></p>';
     a.appendChild(gl);
     br(a);
     br(a);
@@ -801,8 +753,8 @@
         localStorage.setItem('emuColorTheme', document.getElementById('color').value);
     });
     document.addEventListener('keydown', keyDDown, false);
-    checkForUpdate();
     if (updateFiles !== false) {
-        setTimeout(cacheCommonModules, 2000);
+        checkForUpdate();
+        cacheCommonModules();
     };
 })();
