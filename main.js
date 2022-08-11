@@ -225,7 +225,6 @@
         var status = document.getElementById('offlineStatus');
         try {
             await getCachedFileUrl('loader', baseUrl + 'loader.js', js, true);
-            await getCachedFileUrl('webrtc', baseUrl + 'webrtc-adapter.js', js, true);
             await getCachedFileUrl('rar', baseUrl + 'libunrar.js', js, true);
             await getCachedFileUrl('zip', baseUrl + 'extractzip.js', js, true);
             await getCachedFileUrl('7zip', baseUrl + 'extract7z.js', js, true);
@@ -262,7 +261,6 @@
         var base = 'https://rawcdn.githack.com/ethanaobrien/emulatorjs/main/data/';
         try {
             var loader = await getCachedFileUrl('loader', base+'loader.js', js);
-            var webrtc = await getCachedFileUrl('webrtc', base+'webrtc-adapter.js', js);
             var rar = await getCachedFileUrl('rar', base+'libunrar.js', js);
             var rarMem = await getCachedFileUrl('rarMem', base+'libunrar.js.mem', 'application/json');
             var zip = await getCachedFileUrl('zip', base+'extractzip.js', js);
@@ -281,7 +279,6 @@
             "extract7z.js": sevenzip,
             "extractzip.js": zip,
             "libunrar.js": rar,
-            "webrtc-adapter.js": webrtc,
             "libunrar.js.mem": rarMem
         };
         var b = ce('style');
