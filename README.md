@@ -1,6 +1,6 @@
 # emulator-button
 This button that does games
 
-https://ethanaobrien.github.io/emulator-button/index.html
+https://emulatorjs.github.io/emulator-button/index.html
 
-https://raw.githack.com/ethanaobrien/emulator-button/main/index.html
+https://raw.githack.com/EmulatorJS/emulator-button/main/index.html
