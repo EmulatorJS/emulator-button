@@ -9,6 +9,22 @@
         return p;
     };
     var emuVersion = {{VERSION}};
+    var domainForUrls = await (async function() {
+        var availableURLs = ["https://rawcdn.githack.com/", "https://canvas-cluster-009.herokuapp.com/https://rawcdn.githack.com/", "https://canvas-cluster-009.herokuapp.com/https://emulatorjs.github.io/"];
+        if (availableURLs.includes(localStorage.getItem('emuButtonResourceDomain'))) return localStorage.getItem('emuButtonResourceDomain');
+        alert("First Time Setup... Please wait.");
+        for (let i=0; i<availableURLs.length; i++) {
+            try {
+                let res = await fetch(availableURLs[i]+'EmulatorJS/emulator-button/main/version.json');
+                let text = JSON.parse(await res.text()).current_version;
+                console.log(text);
+                console.log(isNaN(text));
+                localStorage.setItem('emuButtonResourceDomain', availableURLs[i]);
+            } catch(e) {}
+        }
+        if (availableURLs.includes(localStorage.getItem('emuButtonResourceDomain'))) return localStorage.getItem('emuButtonResourceDomain');
+        alert("Error! All available resource locations are not available (maybe blocked?)");
+    })();
     var updateFiles = function() {
         if (window.navigator.onLine === false) {
             return false;
@@ -17,7 +33,7 @@
     }();
     async function checkForUpdate() {
         try {
-            var version = await fetch('https://raw.githack.com/ethanaobrien/emulator-button/main/version.json');
+            var version = await fetch(domainForUrls+'EmulatorJS/emulator-button/main/version.json');
             version = JSON.parse(await version.text());
         } catch(e) {
             return;
@@ -25,7 +41,7 @@
         var usingVersion = emuVersion;
         if (usingVersion < version.current_version) {
             var a = ce('div');
-            var html = '<h2>Version ' + version.current_version + ' is out! <a href="https://raw.githack.com/ethanaobrien/emulator-button/main/index.html" target="_blank">Click Here</a> to update.</h2><p>Changes:</p><ul>';
+            var html = '<h2>Version ' + version.current_version + ' is out! <a href="'+domainForUrls+'emulator-button/main/index.html" target="_blank">Click Here</a> to update.</h2><p>Changes:</p><ul>';
             for (var i=usingVersion+0.1; i<=version.current_version; i+=0.1) {
                 i = Math.round(i*10)/10;
                 var y = i.toString();
@@ -221,7 +237,7 @@
     };
     async function cacheCommonModules() {
         var js = 'text/javascript';
-        var baseUrl = 'https://rawcdn.githack.com/ethanaobrien/emulatorjs/main/data/';
+        var baseUrl = domainForUrls+'EmulatorJS/EmulatorJS/main/data/';
         var status = document.getElementById('offlineStatus');
         try {
             await getCachedFileUrl('loader', baseUrl + 'loader.js', js, true);
@@ -258,7 +274,7 @@
     async function loadGame(fileURL, gameName, core, adUrl, color, useOldCores, lang) {
         document.removeEventListener('keydown', keyDDown, false);
         var js = 'text/javascript';
-        var base = 'https://rawcdn.githack.com/ethanaobrien/emulatorjs/main/data/';
+        var base = domainForUrls+'EmulatorJS/EmulatorJS/main/data/';
         try {
             var loader = await getCachedFileUrl('loader', base+'loader.js', js);
             var rar = await getCachedFileUrl('rar', base+'libunrar.js', js);
@@ -646,7 +662,7 @@
                 };
                 a.click();
             };
-            script.src = 'https://raw.githack.com/Stuk/jszip/master/dist/jszip.js';
+            script.src = domainForUrls+'Stuk/jszip/master/dist/jszip.js';
             document.body.appendChild(script);
         };
     }(qwe);
@@ -680,7 +696,7 @@
                 a.click();
                 setTimeout(function() {p.remove();}, 10000);
             };
-            script.src = 'https://raw.githack.com/Stuk/jszip/master/dist/jszip.js';
+            script.src = domainForUrls+'Stuk/jszip/master/dist/jszip.js';
             document.body.appendChild(script);
         };
     }(t, qwe);
