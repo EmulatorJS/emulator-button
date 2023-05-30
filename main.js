@@ -10,26 +10,21 @@
     };
     var emuVersion = {{VERSION}};
     var domainForUrls = await (async function() {
-        var availableURLs = ["https://rawcdn.githack.com/", "https://canvas-cluster-009.herokuapp.com/https://rawcdn.githack.com/", "https://canvas-cluster-009.herokuapp.com/https://emulatorjs.github.io/"];
-        if (availableURLs.includes(localStorage.getItem('emuButtonResourceDomain'))) return localStorage.getItem('emuButtonResourceDomain');
-        alert("First Time Setup... Please wait.");
+        var availableURLs = ["https://rawcdn.githack.com/", "https://emulatorjs.github.io/", "https://raw.githubusercontent.com/"];
+        if (window.navigator.onLine === false && availableURLs.includes(localStorage.getItem('emuButtonResourceDomain'))) return localStorage.getItem('emuButtonResourceDomain');
+        alert("Loading...");
         for (let i=0; i<availableURLs.length; i++) {
             try {
                 let res = await fetch(availableURLs[i]+'EmulatorJS/emulator-button/main/version.json');
                 let text = JSON.parse(await res.text()).current_version;
-                console.log(text);
-                console.log(isNaN(text));
                 localStorage.setItem('emuButtonResourceDomain', availableURLs[i]);
+                return availableURLs[i];
             } catch(e) {}
         }
-        if (availableURLs.includes(localStorage.getItem('emuButtonResourceDomain'))) return localStorage.getItem('emuButtonResourceDomain');
         alert("Error! All available resource locations are not available (maybe blocked?)");
     })();
     var updateFiles = function() {
-        if (window.navigator.onLine === false) {
-            return false;
-        }
-        return true;
+        return window.navigator.onLine;
     }();
     async function checkForUpdate() {
         try {
@@ -696,6 +691,9 @@
                 a.click();
                 setTimeout(function() {p.remove();}, 10000);
             };
+            script.onerror = function() {
+                alert("Something went wrong... Maybe its blocked?");
+            }
             script.src = domainForUrls+'Stuk/jszip/master/dist/jszip.js';
             document.body.appendChild(script);
         };
