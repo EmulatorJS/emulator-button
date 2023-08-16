@@ -1,45 +1,80 @@
 (async function() {
-    var ce = function(e) {return document.createElement(e);};
-    var br = function(e) {e.appendChild(ce('br'))};
-    var cp = function(e, t, id) {
-        var p = ce('p');
+    const ce = function(e) {return document.createElement(e);};
+    const br = function(e) {e.appendChild(ce('br'))};
+    const cp = function(e, t, id) {
+        const p = ce('p');
         p.innerHTML = t||'';
         if (id) {p.id=id;};
         e.appendChild(p);
         return p;
     };
-    var emuVersion = {{VERSION}};
-    var domainForUrls = await (async function() {
-        var availableURLs = ["https://rawcdn.githack.com/", "https://emulatorjs.github.io/", "https://raw.githubusercontent.com/"];
+    var resetPageContents = function() {
+        while(document.body.firstChild) {
+            document.body.removeChild(document.body.firstChild);
+        };
+        document.body.style = 'backgroundColor: white;';
+        if (document.getElementsByTagName('title')[0]) {
+            var title = ce('title');
+            title.innerHTML = document.getElementsByTagName('title')[0].innerHTML;
+            while(document.head.firstChild) {
+                document.head.removeChild(document.head.firstChild);
+            };
+            document.head.appendChild(title);
+        } else {
+            while(document.head.firstChild) {
+                document.head.removeChild(document.head.firstChild);
+            };
+        };
+    };
+    const emuVersion = {{VERSION}};
+    const domainForUrls = await (async function() {
+        /*
+        TODO
+        resetPageContents();
+        const a = ce('div');
+        const html = "All resources are blocked! Follow these steps to get the EmulatorJS resources.\n\n1. Go to https://github.com/EmulatorJS/EmulatorJS/\n2. Select \"code\" and click \"Download ZIP\".\n3. Upload the zip below:";
+        a.innerText = html;
+        br(a);
+        const file = ce("input");
+        file.type = "file";
+        file.addEventListener("change", (e) => {
+            const file = e.target.files[0];
+            console.log(file);
+        })
+        a.appendChild(file);
+        document.body.appendChild(a);
+        
+        return;
+        */
+        const availableURLs = ["https://rawcdn.githack.com/EmulatorJS/EmulatorJS/main/data/", "https://demo.emulatorjs.org/data/", "https://raw.githubusercontent.com/EmulatorJS/EmulatorJS/main/data/"];
         if (window.navigator.onLine === false && availableURLs.includes(localStorage.getItem('emuButtonResourceDomain'))) return localStorage.getItem('emuButtonResourceDomain');
-        alert("Loading...");
+        console.log("Loading...");
         for (let i=0; i<availableURLs.length; i++) {
             try {
-                let res = await fetch(availableURLs[i]+'EmulatorJS/emulator-button/main/version.json');
-                let text = JSON.parse(await res.text()).current_version;
+                let res = await fetch(availableURLs[i]+'version.json');
                 localStorage.setItem('emuButtonResourceDomain', availableURLs[i]);
+                console.log("got", availableURLs[i]);
                 return availableURLs[i];
             } catch(e) {}
         }
-        alert("Error! All available resource locations are not available (maybe blocked?)");
+        console.log("Error! All available resource locations are not available (maybe blocked?)");
     })();
-    var updateFiles = function() {
-        return window.navigator.onLine;
-    }();
+    const updateFiles = window.navigator.onLine;
     async function checkForUpdate() {
+        let version;
         try {
-            var version = await fetch(domainForUrls+'EmulatorJS/emulator-button/main/version.json');
+            version = await fetch('https://rawcdn.githack.com/EmulatorJS/emulator-button/main/version.json');
             version = JSON.parse(await version.text());
         } catch(e) {
             return;
         };
-        var usingVersion = emuVersion;
+        const usingVersion = emuVersion;
         if (usingVersion < version.current_version) {
-            var a = ce('div');
-            var html = '<h2>Version ' + version.current_version + ' is out! <a href="'+domainForUrls+'emulator-button/main/index.html" target="_blank">Click Here</a> to update.</h2><p>Changes:</p><ul>';
-            for (var i=usingVersion+0.1; i<=version.current_version; i+=0.1) {
+            const a = ce('div');
+            let html = '<h2>Version ' + version.current_version + ' is out! <a href="https://rawcdn.githack.com/EmulatorJS/emulator-button/main/index.html" target="_blank">Click Here</a> to update.</h2><p>Changes:</p><ul>';
+            for (let i=usingVersion+0.1; i<=version.current_version; i+=0.1) {
                 i = Math.round(i*10)/10;
-                var y = i.toString();
+                const y = i.toString();
                 if (version.changes[y]) {
                     for (var w=0; w<version.changes[y].length; w++) {
                         html += '<li>' + version.changes[y][w] + '</li>';
@@ -59,9 +94,9 @@
             return this.split(a).join(b);
         };
     };
-    var pressText = '';
+    let pressText = '';
     function keyDDown(e) {
-        var key = e.key;
+        const key = e.key;
         if (key == 'Backspace') {
             pressText = '';
         } else {
@@ -231,66 +266,46 @@
         await put(key, data, 'emulatorGameCache', 'emulatorGameCache');
     };
     async function cacheCommonModules() {
-        var js = 'text/javascript';
-        var baseUrl = domainForUrls+'EmulatorJS/EmulatorJS/main/data/';
-        var status = document.getElementById('offlineStatus');
+        const js = 'text/javascript';
+        const baseUrl = domainForUrls;
+        const status = document.getElementById('offlineStatus');
         try {
             await getCachedFileUrl('loader', baseUrl + 'loader.js', js, true);
-            await getCachedFileUrl('rar', baseUrl + 'libunrar.js', js, true);
-            await getCachedFileUrl('zip', baseUrl + 'extractzip.js', js, true);
-            await getCachedFileUrl('7zip', baseUrl + 'extract7z.js', js, true);
+            await getCachedFileUrl('rar', baseUrl + 'compression/libunrar.js', js, true);
+            await getCachedFileUrl('rarWasm', baseUrl + 'compression/libunrar.wasm', "application/wasm", true);
+            await getCachedFileUrl('zip', baseUrl + 'compression/extractzip.js', js, true);
+            await getCachedFileUrl('7zip', baseUrl + 'compression/extract7z.js', js, true);
             await getCachedFileUrl('emuMin', baseUrl + 'emulator.min.js', js, true);
-            await getCachedFileUrl('emuCSS', baseUrl + 'emu-css.min.css', 'text/css', true);
-            await getCachedFileUrl('rarMem', baseUrl+'libunrar.js.mem', js, true);
-            await getCachedFileUrl('v', baseUrl + 'v.json', 'application/json', true);
+            await getCachedFileUrl('emuCSS', baseUrl + 'emulator.min.css', 'text/css', true);
             status.innerHTML = 'Offline Mode: READY';
         } catch(e) {
             status.innerHTML = 'Offline Mode: NOT READY';
         };
     };
-    var resetPageContents = function() {
-        while(document.body.firstChild) {
-            document.body.removeChild(document.body.firstChild);
-        };
-        document.body.style = 'backgroundColor: white;';
-        if (document.getElementsByTagName('title')[0]) {
-            var title = ce('title');
-            title.innerHTML = document.getElementsByTagName('title')[0].innerHTML;
-            while(document.head.firstChild) {
-                document.head.removeChild(document.head.firstChild);
-            };
-            document.head.appendChild(title);
-        } else {
-            while(document.head.firstChild) {
-                document.head.removeChild(document.head.firstChild);
-            };
-        };
-    };
     async function loadGame(fileURL, gameName, core, adUrl, color, useOldCores, lang) {
         document.removeEventListener('keydown', keyDDown, false);
-        var js = 'text/javascript';
-        var base = domainForUrls+'EmulatorJS/EmulatorJS/main/data/';
+        const js = 'text/javascript';
+        const base = domainForUrls;
         try {
-            var loader = await getCachedFileUrl('loader', base+'loader.js', js);
-            var rar = await getCachedFileUrl('rar', base+'libunrar.js', js);
-            var rarMem = await getCachedFileUrl('rarMem', base+'libunrar.js.mem', 'application/json');
-            var zip = await getCachedFileUrl('zip', base+'extractzip.js', js);
-            var sevenzip = await getCachedFileUrl('7zip', base+'extract7z.js', js);
+            var loader = await getCachedFileUrl('loader', base + 'loader.js', js);
+            var rar = await getCachedFileUrl('rar', base + 'compression/libunrar.js', js);
+            var rarWasm = await getCachedFileUrl('rarWasm', base + 'compression/libunrar.wasm', "application/wasm");
+            var zip = await getCachedFileUrl('zip', base + 'compression/extractzip.js', js);
+            var sevenzip = await getCachedFileUrl('7zip', base + 'compression/extract7z.js', js);
             var emuMin = await getCachedFileUrl('emuMin', base + 'emulator.min.js', js);
-            var emuCSS = await getCachedFileUrl('emuCSS', base + 'emu-css.min.css', 'text/css');
-            var v = await getCachedFileUrl('v', base+'v.json', 'application/json');
+            var emuCSS = await getCachedFileUrl('emuCSS', base + 'emulator.min.css', 'text/css');
         } catch(e) {
-            alert('looks like githack is down or you are offline. Please try again later.');
+            console.warn(e);
+            alert('Looks like githack is down or you are offline. Please try again later.');
             return;
         }
         var paths = {
-            "v.json": v,
             "emulator.min.js": emuMin,
-            "emu-css.min.css": emuCSS,
+            "emulator.min.css": emuCSS,
             "extract7z.js": sevenzip,
             "extractzip.js": zip,
             "libunrar.js": rar,
-            "libunrar.js.mem": rarMem
+            "libunrar.wasm": rarWasm
         };
         var b = ce('style');
         b.innerHTML = '*{padding:0;margin:0;}';
@@ -657,7 +672,10 @@
                 };
                 a.click();
             };
-            script.src = domainForUrls+'Stuk/jszip/master/dist/jszip.js';
+            script.onerror = function() {
+                alert("Something went wrong... Maybe githack is blocked?");
+            }
+            script.src = 'https://rawcdn.githack.com/Stuk/jszip/master/dist/jszip.js';
             document.body.appendChild(script);
         };
     }(qwe);
@@ -692,9 +710,9 @@
                 setTimeout(function() {p.remove();}, 10000);
             };
             script.onerror = function() {
-                alert("Something went wrong... Maybe its blocked?");
+                alert("Something went wrong... Maybe githack is blocked?");
             }
-            script.src = domainForUrls+'Stuk/jszip/master/dist/jszip.js';
+            script.src = 'https://rawcdn.githack.com/Stuk/jszip/master/dist/jszip.js';
             document.body.appendChild(script);
         };
     }(t, qwe);
