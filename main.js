@@ -49,6 +49,7 @@
         const availableURLs = ["https://rawcdn.githack.com/EmulatorJS/EmulatorJS/main/data/", "https://demo.emulatorjs.org/data/", "https://raw.githubusercontent.com/EmulatorJS/EmulatorJS/main/data/"];
         if (window.navigator.onLine === false && availableURLs.includes(localStorage.getItem('emuButtonResourceDomain'))) return localStorage.getItem('emuButtonResourceDomain');
         console.log("Loading...");
+        alert("Loading...");
         for (let i=0; i<availableURLs.length; i++) {
             try {
                 let res = await fetch(availableURLs[i]+'version.json');
