@@ -46,7 +46,7 @@
         
         return;
         */
-        const availableURLs = ["https://rawcdn.githack.com/EmulatorJS/EmulatorJS/main/data/", "https://demo.emulatorjs.org/data/", "https://raw.githubusercontent.com/EmulatorJS/EmulatorJS/main/data/"];
+        const availableURLs = ["https://cdn.emulatorjs.org/stable/data/", "https://demo.emulatorjs.org/data/"];
         if (window.navigator.onLine === false && availableURLs.includes(localStorage.getItem('emuButtonResourceDomain'))) return localStorage.getItem('emuButtonResourceDomain');
         console.log("Loading...");
         alert("Loading...");
@@ -58,7 +58,8 @@
                 return availableURLs[i];
             } catch(e) {}
         }
-        console.log("Error! All available resource locations are not available (maybe blocked?)");
+        console.log("Error! All available resource locations are not available (may be blocked?)");
+        alert("Error! All available resource locations are not available (may be blocked/offline?)");
     })();
     const updateFiles = window.navigator.onLine;
     async function checkForUpdate() {
